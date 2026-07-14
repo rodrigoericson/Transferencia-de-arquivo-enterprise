@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using STA.Core.Data.Repositories;
 using STA.Core.Services;
@@ -100,12 +101,13 @@ public class Worker : BackgroundService
         var settings = _settings.Value;
 
         using var scope = _scopeFactory.CreateScope();
+        var etapaProvider = scope.ServiceProvider.GetRequiredService<IEtapaConfigProvider>();
         var pathLoader = scope.ServiceProvider.GetRequiredService<IPathConfigLoader>();
         var transferService = scope.ServiceProvider.GetRequiredService<IFileTransferService>();
         var purgeService = scope.ServiceProvider.GetRequiredService<IFilePurgeService>();
         var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
 
-        var chains = await CarregarChainsAsync(pathLoader, settings, logRepository, stoppingToken);
+        var chains = await CarregarChainsAsync(etapaProvider, pathLoader, settings, logRepository, stoppingToken);
         if (chains is null)
             return;
 
@@ -117,23 +119,55 @@ public class Worker : BackgroundService
     }
 
     private async Task<IReadOnlyList<STA.Core.Models.TransferChain>?> CarregarChainsAsync(
+        IEtapaConfigProvider etapaProvider,
         IPathConfigLoader pathLoader,
         StaSettings settings,
         ILogRepository logRepository,
         CancellationToken stoppingToken)
     {
+        // Tenta carregar do banco primeiro (ignora falha — pode não ter tabelas ainda)
+        try
+        {
+            var systemId = await GetCnSistemaAsync(stoppingToken);
+            if (systemId > 0)
+            {
+                var chains = await etapaProvider.CarregarEtapasAsync(systemId, stoppingToken);
+                if (chains.Count > 0)
+                {
+                    _logger.LogDebug("Carregadas {Count} etapas do banco de dados.", chains.Count);
+                    return chains;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogDebug(ex, "Tabelas de etapa não disponíveis no banco. Usando fallback XML.");
+        }
+
+        // Fallback: carregar do XML
         try
         {
             return pathLoader.CarregarCaminhos(settings.ArquivoPathsXml);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Falha ao carregar paths.xml de '{Path}'.", settings.ArquivoPathsXml);
+            _logger.LogError(ex, "Falha ao carregar configuração de transferência.");
             await logRepository.InserirLogAsync(
                 _aliasSistema, settings.CnProcesso, DateTime.UtcNow, "E", 0, 0, 0, 0,
-                BuildLogObservacao("Leitura XML", ex.Message), stoppingToken);
+                BuildLogObservacao("Leitura configuração", ex.Message), stoppingToken);
             return null;
         }
+    }
+
+    private async Task<int> GetCnSistemaAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<STA.Core.Data.StaDbContext>();
+        var sistema = await context.Sistemas
+            .Where(s => s.CdAliasSistema == _aliasSistema)
+            .Select(s => s.CnSistema)
+            .FirstOrDefaultAsync(stoppingToken);
+        return sistema;
     }
 
     private async Task<CicloTotals> ProcessarChainsAsync(

@@ -34,6 +34,7 @@ var builder = Host.CreateDefaultBuilder(args)
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(10),
                     errorCodesToAdd: null);
+                npgsql.MigrationsAssembly("STA.Worker");
             })
         );
 
@@ -44,6 +45,8 @@ var builder = Host.CreateDefaultBuilder(args)
         // Repositories
         services.AddScoped<IParametroRepository, ParametroRepository>();
         services.AddScoped<ILogRepository, LogRepository>();
+        services.AddScoped<IEtapaRepository, EtapaRepository>();
+        services.AddScoped<ILogArquivoRepository, LogArquivoRepository>();
 
         // Services
         services.AddSingleton<IFileMaskMatcher, FileMaskMatcher>();
@@ -53,6 +56,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IPathConfigLoader, PathConfigLoader>();
         services.AddScoped<IFileRetentionService, FileRetentionService>();
         services.AddScoped<IFileTransferService, FileTransferService>();
+        services.AddScoped<IEtapaConfigProvider, EtapaConfigProvider>();
         services.AddSingleton<IFileCompressor>(sp =>
         {
             var settings = sp.GetRequiredService<IOptions<StaSettings>>().Value;
