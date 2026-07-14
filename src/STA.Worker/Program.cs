@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using STA.Worker;
 using STA.Worker.Data;
 using STA.Worker.Data.Repositories;
+using STA.Worker.Services;
 using STA.Worker.Settings;
 
 var builder = Host.CreateDefaultBuilder(args)
@@ -42,6 +44,20 @@ var builder = Host.CreateDefaultBuilder(args)
         // Repositories
         services.AddScoped<IParametroRepository, ParametroRepository>();
         services.AddScoped<ILogRepository, LogRepository>();
+
+        // Services
+        services.AddSingleton<IFileMaskMatcher, FileMaskMatcher>();
+        services.AddSingleton<IFileSizeValidator, FileSizeValidator>();
+        services.AddSingleton<IFileLockChecker, FileLockChecker>();
+        services.AddSingleton<IPathConfigLoader, PathConfigLoader>();
+        services.AddScoped<IFileRetentionService, FileRetentionService>();
+        services.AddScoped<IFileTransferService, FileTransferService>();
+        services.AddSingleton<IFileCompressor>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<StaSettings>>().Value;
+            var logger = sp.GetRequiredService<ILogger<FileCompressor>>();
+            return new FileCompressor(settings.Arquivo7Zip, logger);
+        });
 
         // Worker
         services.AddHostedService<Worker>();

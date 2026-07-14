@@ -87,11 +87,88 @@ public class Worker : BackgroundService
             return;
         }
 
-        // TODO Fase 3: executar transferências (FileTransferService)
-        // TODO Fase 3: excluir logs expirados (FileRetentionService)
         _logger.LogInformation(
             "Ciclo de execução dentro da janela ({Ini}–{Fim}) em: {Time}.",
             _ultimosParametros.HoraInicial, _ultimosParametros.HoraFinal, DateTimeOffset.Now);
+
+        await ExecutarTransferenciasAsync(stoppingToken);
+        await ExecutarLimpezaLogsAsync(stoppingToken);
+    }
+
+    private async Task ExecutarTransferenciasAsync(CancellationToken stoppingToken)
+    {
+        var settings = _settings.Value;
+
+        using var scope = _scopeFactory.CreateScope();
+        var pathLoader = scope.ServiceProvider.GetRequiredService<IPathConfigLoader>();
+        var transferService = scope.ServiceProvider.GetRequiredService<IFileTransferService>();
+        var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
+
+        IReadOnlyList<Models.TransferChain> chains;
+        try
+        {
+            chains = pathLoader.CarregarCaminhos(settings.ArquivoPathsXml);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Falha ao carregar paths.xml de '{Path}'.", settings.ArquivoPathsXml);
+            await logRepository.InserirLogAsync(
+                _aliasSistema, settings.CnProcesso, DateTime.UtcNow, "E", 0, 0, 0, 0,
+                $"<Etapa>Leitura XML</Etapa><Observacao>{ex.Message}</Observacao>", stoppingToken);
+            return;
+        }
+
+        var dtInicio = DateTime.UtcNow;
+        int totalProcessed = 0, totalSucceeded = 0, totalFailed = 0;
+
+        foreach (var chain in chains)
+        {
+            for (int i = 0; i < chain.Nodes.Count - 1; i++)
+            {
+                var sourceNode = chain.Nodes[i];
+                var destNode = chain.Nodes[i + 1];
+
+                var result = await transferService.TransferAsync(
+                    sourceNode,
+                    sourceNode.DiretorioPrincipal,
+                    destNode.DiretorioPrincipal,
+                    settings.SobreEscreverArquivos,
+                    settings.TimeoutCompactacaoMs,
+                    stoppingToken);
+
+                totalProcessed += result.FilesProcessed;
+                totalSucceeded += result.FilesSucceeded;
+                totalFailed += result.FilesFailed;
+            }
+        }
+
+        var status = totalFailed > 0 ? "W" : "O";
+        var obs = $"<Etapa>Transferencia de arquivos</Etapa><Observacao>Processados: {totalProcessed}, Sucesso: {totalSucceeded}, Falhas: {totalFailed}</Observacao>";
+
+        if (settings.GeraLogSucessoBancoDados || totalFailed > 0)
+        {
+            await logRepository.InserirLogAsync(
+                _aliasSistema, settings.CnProcesso, dtInicio, status,
+                totalSucceeded, 0, totalFailed, 0, obs, stoppingToken);
+        }
+
+        if (totalFailed > 0)
+            _logger.LogWarning("Ciclo com falhas: {Processed} processados, {Succeeded} OK, {Failed} erros.", totalProcessed, totalSucceeded, totalFailed);
+        else if (totalProcessed > 0)
+            _logger.LogInformation("Ciclo concluído: {Processed} arquivos transferidos com sucesso.", totalSucceeded);
+    }
+
+    private async Task ExecutarLimpezaLogsAsync(CancellationToken stoppingToken)
+    {
+        var settings = _settings.Value;
+        if (settings.QtdDiasExcluirLog <= 0)
+            return;
+
+        using var scope = _scopeFactory.CreateScope();
+        var retentionService = scope.ServiceProvider.GetRequiredService<IFileRetentionService>();
+
+        await retentionService.CleanupOldLogsAsync(
+            _aliasSistema, settings.CnProcesso, settings.QtdDiasExcluirLog, stoppingToken);
     }
 
     private async Task AtualizarParametrosAsync(CancellationToken stoppingToken)
