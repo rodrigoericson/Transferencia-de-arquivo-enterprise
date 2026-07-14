@@ -5,7 +5,7 @@ namespace STA.Worker.Data.Repositories;
 
 /// <summary>
 /// Persistência de logs de processo via EF Core + function PostgreSQL.
-/// Substitui DAOSybase.GerarLogSistema e DAOSybase.ExcluirLog.
+/// Persistência de logs de processo via EF Core + PostgreSQL.
 /// </summary>
 public class LogRepository : ILogRepository
 {
@@ -32,7 +32,7 @@ public class LogRepository : ILogRepository
     {
         try
         {
-            // Chama a function PostgreSQL fn_inclui_log_processo (equivalente à SP Sybase)
+            // Chama a function PostgreSQL fn_inclui_log_processo
             var result = await _context.Database
                 .SqlQuery<int>($@"
                     SELECT sta.fn_inclui_log_processo(

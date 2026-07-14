@@ -2,7 +2,7 @@ namespace STA.Worker.Data.Repositories;
 
 /// <summary>
 /// Contrato para acesso a parâmetros do sistema (horários e período de execução).
-/// Substitui a query BuscarDataInternaloProcesso do DAOSybase legado.
+/// Contrato para acesso a parâmetros de execução do sistema via PostgreSQL.
 /// </summary>
 public interface IParametroRepository
 {

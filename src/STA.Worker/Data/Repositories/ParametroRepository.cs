@@ -4,7 +4,7 @@ namespace STA.Worker.Data.Repositories;
 
 /// <summary>
 /// Acesso a parâmetros de configuração do sistema via EF Core.
-/// Substitui BuscarDataInternaloProcesso do DAOSybase legado.
+/// Acesso a parâmetros de execução do sistema via PostgreSQL.
 /// </summary>
 public class ParametroRepository : IParametroRepository
 {

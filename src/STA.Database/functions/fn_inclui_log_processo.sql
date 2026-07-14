@@ -1,4 +1,4 @@
--- Function equivalente à stored procedure sp_inclui_log_processo do Sybase.
+-- Function PostgreSQL para inserção de log de processo.
 -- Insere um registro de log de processo e retorna o ID gerado.
 
 CREATE OR REPLACE FUNCTION sta.fn_inclui_log_processo(

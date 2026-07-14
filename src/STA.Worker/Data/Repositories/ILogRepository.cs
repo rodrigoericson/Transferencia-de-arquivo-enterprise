@@ -2,13 +2,13 @@ namespace STA.Worker.Data.Repositories;
 
 /// <summary>
 /// Contrato para persistência de logs de processo.
-/// Substitui DAOSybase.GerarLogSistema e DAOSybase.ExcluirLog do código legado.
+/// Contrato para persistência de logs de processo via PostgreSQL.
 /// </summary>
 public interface ILogRepository
 {
     /// <summary>
     /// Insere um registro de log de processo chamando a function fn_inclui_log_processo.
-    /// Equivale à stored procedure sp_inclui_log_processo do Sybase.
+    /// Insere log chamando a function PostgreSQL fn_inclui_log_processo.
     /// </summary>
     /// <param name="aliasSistema">Alias do sistema (e.g., "STA").</param>
     /// <param name="cnProcesso">Número do processo.</param>
@@ -35,7 +35,7 @@ public interface ILogRepository
 
     /// <summary>
     /// Exclui logs de processo com mais de N dias (dt_fim_processo < hoje - dias).
-    /// Equivale ao DAOSybase.ExcluirLog do código legado.
+    /// Exclui logs antigos via DELETE parametrizado no PostgreSQL.
     /// </summary>
     /// <param name="aliasSistema">Alias do sistema.</param>
     /// <param name="cnProcesso">Número do processo.</param>

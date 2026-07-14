@@ -140,6 +140,14 @@ public class Worker : BackgroundService
                 totalSucceeded += result.FilesSucceeded;
                 totalFailed += result.FilesFailed;
             }
+
+            // Última linha da cadeia: apenas exclusão de arquivos antigos (legado ExcluiArquivos)
+            if (chain.Nodes.Count > 0)
+            {
+                var lastNode = chain.Nodes[^1];
+                var maskMatcher = scope.ServiceProvider.GetRequiredService<IFileMaskMatcher>();
+                ExcluirArquivosAntigos(lastNode, maskMatcher);
+            }
         }
 
         var status = totalFailed > 0 ? "W" : "O";
@@ -169,6 +177,48 @@ public class Worker : BackgroundService
 
         await retentionService.CleanupOldLogsAsync(
             _aliasSistema, settings.CnProcesso, settings.QtdDiasExcluirLog, stoppingToken);
+    }
+
+    private void ExcluirArquivosAntigos(Models.TransferPath node, IFileMaskMatcher maskMatcher)
+    {
+        if (node.DiasExcluir <= 0)
+            return;
+
+        var cutoff = DateTime.Now.AddDays(-node.DiasExcluir);
+
+        PurgeDirectory(node.DiretorioPrincipal, cutoff, node.MascaraArq, maskMatcher);
+
+        if (!string.IsNullOrWhiteSpace(node.DiretorioBackup))
+            PurgeDirectory(node.DiretorioBackup, cutoff, node.MascaraArq, maskMatcher);
+    }
+
+    private void PurgeDirectory(string directory, DateTime cutoff, string mask, IFileMaskMatcher maskMatcher)
+    {
+        if (!Directory.Exists(directory))
+            return;
+
+        try
+        {
+            foreach (var file in new DirectoryInfo(directory).GetFiles())
+            {
+                if (file.LastWriteTime < cutoff
+                    && (string.IsNullOrWhiteSpace(mask) || maskMatcher.Match(file.Name, mask)))
+                {
+                    try
+                    {
+                        file.Delete();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Falha ao excluir '{File}'.", file.FullName);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao purgar diretório '{Dir}'.", directory);
+        }
     }
 
     private async Task AtualizarParametrosAsync(CancellationToken stoppingToken)
