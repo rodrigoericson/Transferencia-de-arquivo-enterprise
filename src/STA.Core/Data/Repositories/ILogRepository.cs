@@ -1,14 +1,12 @@
 namespace STA.Core.Data.Repositories;
 
 /// <summary>
-/// Contrato para persistência de logs de processo.
 /// Contrato para persistência de logs de processo via PostgreSQL.
 /// </summary>
 public interface ILogRepository
 {
     /// <summary>
-    /// Insere um registro de log de processo chamando a function fn_inclui_log_processo.
-    /// Insere log chamando a function PostgreSQL fn_inclui_log_processo.
+    /// Insere um registro de log de processo chamando a function PostgreSQL fn_inclui_log_processo.
     /// </summary>
     /// <param name="aliasSistema">Alias do sistema (e.g., "STA").</param>
     /// <param name="cnProcesso">Número do processo.</param>
@@ -34,8 +32,7 @@ public interface ILogRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Exclui logs de processo com mais de N dias (dt_fim_processo < hoje - dias).
-    /// Exclui logs antigos via DELETE parametrizado no PostgreSQL.
+    /// Exclui logs de processo com mais de N dias via DELETE parametrizado no PostgreSQL (dt_fim_processo < hoje - dias).
     /// </summary>
     /// <param name="aliasSistema">Alias do sistema.</param>
     /// <param name="cnProcesso">Número do processo.</param>

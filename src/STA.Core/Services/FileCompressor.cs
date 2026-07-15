@@ -60,8 +60,8 @@ public class FileCompressor : IFileCompressor
             return false;
         }
 
-        var arguments = $"a -t{compressionType.ToLowerInvariant()} \"{outputArchivePath}\" \"{sourceFilePath}\"";
-        return await RunProcessAsync(arguments, timeoutMs, cancellationToken);
+        var args = new[] { "a", $"-t{compressionType.ToLowerInvariant()}", outputArchivePath, sourceFilePath };
+        return await RunProcessAsync(args, timeoutMs, cancellationToken);
     }
 
     public async Task<bool> DecompressAsync(
@@ -76,22 +76,24 @@ public class FileCompressor : IFileCompressor
             return false;
         }
 
-        var arguments = $"x \"{archiveFilePath}\" -o\"{outputDirectory}\" -y";
-        return await RunProcessAsync(arguments, timeoutMs, cancellationToken);
+        var args = new[] { "x", archiveFilePath, $"-o{outputDirectory}", "-y" };
+        return await RunProcessAsync(args, timeoutMs, cancellationToken);
     }
 
-    private async Task<bool> RunProcessAsync(string arguments, int timeoutMs, CancellationToken cancellationToken)
+    private async Task<bool> RunProcessAsync(string[] args, int timeoutMs, CancellationToken cancellationToken)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
         {
             FileName = _sevenZipPath,
-            Arguments = arguments,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+
+        foreach (var arg in args)
+            process.StartInfo.ArgumentList.Add(arg);
 
         try
         {
