@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
-import type { ApiResponse, WorkerStatus } from '../types';
+import type { ApiResponse, PaginatedResponse, WorkerStatus, LogArquivo } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [status, setStatus] = useState<WorkerStatus | null>(null);
+  const [errosRecentes, setErrosRecentes] = useState<LogArquivo[]>([]);
   const [loading, setLoading] = useState(true);
   const logout = useAuth((s) => s.logout);
   const username = useAuth((s) => s.username);
@@ -13,7 +14,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 30000);
+    fetchErrosRecentes();
+    const interval = setInterval(() => { fetchStatus(); fetchErrosRecentes(); }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -23,6 +25,13 @@ export default function Dashboard() {
       if (data.success && data.data) setStatus(data.data);
     } catch { /* handled by interceptor */ }
     setLoading(false);
+  };
+
+  const fetchErrosRecentes = async () => {
+    try {
+      const { data } = await api.get<ApiResponse<PaginatedResponse<LogArquivo>>>('/logs/arquivos?status=E&pageSize=5');
+      if (data.success && data.data) setErrosRecentes(data.data.items);
+    } catch { /* handled by interceptor */ }
   };
 
   const handlePause = async () => {
@@ -75,6 +84,25 @@ export default function Dashboard() {
               value={status.ultimoCicloStatus === 'O' ? 'Sucesso' : status.ultimoCicloStatus ?? '-'}
               color={status.ultimoCicloStatus === 'O' ? 'green' : 'yellow'}
             />
+          </div>
+        )}
+
+        {/* Warnings / Erros Recentes */}
+        {errosRecentes.length > 0 && (
+          <div className="mb-8 p-4 bg-red-950/30 border border-red-900/50 rounded-lg">
+            <h3 className="text-sm font-medium text-red-400 mb-3">⚠️ Erros Recentes</h3>
+            <div className="space-y-2">
+              {errosRecentes.map((log) => (
+                <div key={log.cnLogArquivo} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-red-400">●</span>
+                    <span className="font-mono text-xs text-gray-300">{log.nmArquivo}</span>
+                    <span className="text-xs text-gray-600">{log.dsMensagem || 'Erro na transferência'}</span>
+                  </div>
+                  <span className="text-xs text-gray-600">{new Date(log.dtInicio).toLocaleString('pt-BR')}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
