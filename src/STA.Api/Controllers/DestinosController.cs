@@ -94,6 +94,8 @@ public class DestinosController : ControllerBase
         _context.RotaDestinos.Add(destino);
         await _context.SaveChangesAsync(ct);
 
+        TryCriarDiretorio(destino.DsDiretorioDestino);
+
         var result = new DestinoDto(
             destino.CnRotaDestino, destino.CnRota, destino.NrOrdem,
             destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.FlAtivo);
@@ -133,5 +135,11 @@ public class DestinosController : ControllerBase
         await _context.SaveChangesAsync(ct);
 
         return Ok(new ApiResponse<object>(true, null, "Destino removido."));
+    }
+
+    private static void TryCriarDiretorio(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try { Directory.CreateDirectory(path); } catch { }
     }
 }

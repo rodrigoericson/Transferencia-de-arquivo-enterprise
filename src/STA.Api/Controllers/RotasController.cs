@@ -114,6 +114,9 @@ public class RotasController : ControllerBase
         _context.Rotas.Add(rota);
         await _context.SaveChangesAsync(ct);
 
+        TryCriarDiretorio(rota.DsDiretorioOrigem);
+        TryCriarDiretorio(rota.DsDiretorioBackup);
+
         var result = new RotaDto(
             rota.CnRota, rota.CnEtapa, rota.NrOrdem, rota.DsDiretorioOrigem,
             rota.DsDiretorioBackup, rota.DsMascaraArquivo, rota.DsCompactaOrigemTipo,
@@ -164,5 +167,11 @@ public class RotasController : ControllerBase
         await _context.SaveChangesAsync(ct);
 
         return Ok(new ApiResponse<object>(true, null, "Rota removida."));
+    }
+
+    private static void TryCriarDiretorio(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try { Directory.CreateDirectory(path); } catch { }
     }
 }
