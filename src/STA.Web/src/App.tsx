@@ -6,6 +6,7 @@ import Etapas from './pages/Etapas';
 import Rotas from './pages/Rotas';
 import Destinos from './pages/Destinos';
 import Logs from './pages/Logs';
+import NovaTransferencia from './pages/NovaTransferencia';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuth((s) => s.isAuthenticated);
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/etapas" element={<ProtectedRoute><Etapas /></ProtectedRoute>} />
+        <Route path="/etapas/nova" element={<ProtectedRoute><NovaTransferencia /></ProtectedRoute>} />
         <Route path="/etapas/:etapaId/rotas" element={<ProtectedRoute><Rotas /></ProtectedRoute>} />
         <Route path="/rotas/:rotaId/destinos" element={<ProtectedRoute><Destinos /></ProtectedRoute>} />
         <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
