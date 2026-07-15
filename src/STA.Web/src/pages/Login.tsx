@@ -26,10 +26,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="w-full max-w-sm p-8 bg-gray-900 rounded-lg border border-gray-800">
-        <h1 className="text-2xl font-mono text-green-400 mb-6 text-center">STA Login</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950">
+      <div className="mb-8">
+        <img src="/sta-logo.png" alt="STA" className="h-24 mx-auto" />
+      </div>
 
+      <div className="w-full max-w-sm p-8 bg-gray-900 rounded-lg border border-gray-800 shadow-lg shadow-green-900/10">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Usuário</label>
@@ -57,11 +59,13 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium disabled:opacity-50 transition-colors"
+            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded font-medium disabled:opacity-50 transition-colors"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        <p className="text-center text-xs text-gray-600 mt-4">Sistema de Transferência de Arquivos</p>
       </div>
     </div>
   );
