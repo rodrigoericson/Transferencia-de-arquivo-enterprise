@@ -2,11 +2,16 @@
 
 > Serviço que move arquivos entre servidores de produção. Roda 24/7, dorme entre ciclos, acorda, transfere, dorme de novo.
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=.net)](https://dotnet.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql)](https://www.postgresql.org/)
-[![EF Core](https://img.shields.io/badge/EF%20Core-8.0-512BD4)](https://learn.microsoft.com/ef/core)
-[![Tests](https://img.shields.io/badge/tests-72%2F72-3DDC84?logo=xunit)](https://xunit.net/)
-[![Build](https://img.shields.io/badge/build-passing-3DDC84?logo=github-actions)](#)
+<div align="center">
+
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=.net&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql&logoColor=white)
+![EF Core](https://img.shields.io/badge/EF%20Core-8.0-512BD4?style=flat-square)
+![xUnit](https://img.shields.io/badge/tests-72%2F72-3DDC84?style=flat-square&logo=xunit&logoColor=white)
+![Build](https://img.shields.io/badge/build-passing-3DDC84?style=flat-square)
+![License](https://img.shields.io/badge/license-private-lightgrey?style=flat-square)
+
+</div>
 
 ## O que é
 
@@ -17,21 +22,16 @@ A migração inteira está nesse repositório — commit por commit, fase por fa
 ## Arquitetura
 
 ```
-┌─────────────┐       ┌──────────────┐       ┌─────────────┐
-│   Worker    │──────▶│  PostgreSQL  │◀──────│   Web API   │
-│ (5min ciclo)│       │  (Postgres)  │       │  (Fase 6)   │
-└─────────────┘       └──────────────┘       └─────────────┘
-       │                      ▲
-       │    ┌─────────────────┴──────────────┐
-       ▼    │                                │
-   Arquivos  │  tbl_etapa_transferencia       │ tbl_log_arquivo
-   em UNC    │  tbl_rota_transferencia        │ tbl_log_processo
-             │  tbl_rota_destino              │
-             └────────────────────────────────┘
+ Worker (ciclo 5min)          PostgreSQL            Web API (Fase 6)
+ ──────────────────          ──────────            ───────────────── 
+   Carrega config  ────────▶  tbl_etapa     ◀────  CRUD etapas/rotas
+   Transfere files ────────▶  tbl_log_arquivo ◀────  GET logs/status
+   Grava resultado ────────▶  tbl_log_processo◀────  Pause/Resume
 ```
 
-**Worker** lê configuração do banco → transfere arquivos → grava log por arquivo.
-**API** (em construção) expõe CRUD + consultas + controle de pausa.
+- **Worker** — serviço Windows, roda em background, transfere e loga
+- **API** — (em construção) expõe CRUD, consulta de logs, controle do Worker
+- **Banco** — ponto central: configuração + telemetria + estado
 
 ## Stack
 
@@ -56,35 +56,26 @@ A migração inteira está nesse repositório — commit por commit, fase por fa
 | 7 | 📋 | Frontend React + dashboard |
 | 8 | 📋 | Notificações, audit trail, CI/CD, Docker |
 
-## Como rodar localmente
+## Subindo o ambiente
 
-### Pré-requisitos
-- .NET 10 SDK
-- Docker (ou PostgreSQL 15 local)
-- Git
+Você vai precisar de: .NET 10 SDK, Docker e paciência pra primeira migração.
 
-### 1. Subir o Postgres
 ```bash
+# 1. Postgres
 docker compose up -d postgres
-```
 
-### 2. Aplicar migrations
-```bash
+# 2. Schema (Worker cria as tabelas via EF migrations)
 cd src/STA.Worker
 dotnet ef database update
-```
 
-### 3. Rodar o Worker
-```bash
-dotnet run --project src/STA.Worker
-```
+# 3. Worker rodando
+dotnet run
 
-Em Development mode, ele lê `appsettings.Development.json` com credenciais locais. Em Production, usa variáveis de ambiente (`STA_DB_CONN`, etc).
-
-### 4. Rodar testes
-```bash
+# 4. Validar que tudo funciona
 dotnet test STA.sln
 ```
+
+> **Ambientes:** em *Development* lê `appsettings.Development.json` (credenciais locais, gitignored). Em *Production* usa env vars (`STA_DB_CONN`, etc).
 
 ## Estrutura
 
@@ -98,8 +89,6 @@ docker-compose.yml     # Postgres dev
 STA.sln                # Solução
 ```
 
-Decisões e padrões detalhados em [.claude/skills/](.claude/skills/).
-
 ## Por que esse repo existe
 
 Migração de VB.NET Framework 2.0 → .NET 10 não é trivial. Mas é o tipo de projeto que mostra **disciplina técnica**: refactor incremental, testes crescendo junto com features, sem big-bang rewrite.
@@ -108,6 +97,10 @@ Cada commit conta parte da história. Leia em ordem:
 ```
 Initial commit → ... → Fase 5.3 → ...
 ```
+
+## Licença
+
+Privado. Trabalho original.
 
 ## Licença
 
