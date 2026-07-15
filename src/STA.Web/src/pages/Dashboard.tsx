@@ -79,19 +79,27 @@ export default function Dashboard() {
         {/* Warnings / Erros Recentes */}
         {errosRecentes.length > 0 && (
           <div className="mb-8 p-4 bg-red-950/30 border border-red-900/50 rounded-lg">
-            <h3 className="text-sm font-medium text-red-400 mb-3">⚠️ Erros Recentes</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-medium text-red-400">⚠️ Erros e Avisos Recentes</h3>
+              <button onClick={() => navigate('/logs')} className="text-xs text-red-400 hover:text-red-300">Ver todos →</button>
+            </div>
             <div className="space-y-2">
-              {errosRecentes.map((log) => (
-                <div key={log.cnLogArquivo} className="flex justify-between items-center text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="text-red-400">●</span>
-                    <span className="font-mono text-xs text-gray-300">{log.nmArquivo}</span>
-                    <span className="text-xs text-gray-600">{log.dsMensagem || 'Erro na transferência'}</span>
+              {errosRecentes.slice(0, 3).map((log) => (
+                <div key={log.cnLogArquivo} className="bg-red-950/40 rounded p-2">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-400 text-xs">●</span>
+                      <span className="font-mono text-xs text-gray-200">{log.nmArquivo}</span>
+                    </div>
+                    <span className="text-xs text-gray-600 whitespace-nowrap">{new Date(log.dtInicio).toLocaleString('pt-BR')}</span>
                   </div>
-                  <span className="text-xs text-gray-600">{new Date(log.dtInicio).toLocaleString('pt-BR')}</span>
+                  <p className="text-xs text-red-300/70 mt-1 pl-5">{log.dsMensagem || 'Erro na transferência (verifique permissões ou disponibilidade do diretório)'}</p>
                 </div>
               ))}
             </div>
+            {errosRecentes.length > 3 && (
+              <p className="text-xs text-gray-600 mt-2">+{errosRecentes.length - 3} erro(s) adicional(is)</p>
+            )}
           </div>
         )}
 
