@@ -63,7 +63,8 @@ export default function NovaTransferencia() {
         });
       }
 
-      navigate('/');
+      alert('Transferência criada com sucesso!');
+      navigate('/etapas');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao salvar.';
       setError(msg);

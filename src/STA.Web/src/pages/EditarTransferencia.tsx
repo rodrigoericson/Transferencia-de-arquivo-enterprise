@@ -113,7 +113,8 @@ export default function EditarTransferencia() {
         }
       }
 
-      navigate('/');
+      alert('Transferência salva com sucesso!');
+      navigate('/etapas');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao salvar.';
       setError(msg);

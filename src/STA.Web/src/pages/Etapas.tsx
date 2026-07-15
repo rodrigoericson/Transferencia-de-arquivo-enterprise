@@ -30,6 +30,7 @@ export default function Etapas() {
           }
           completas.push({ ...etapa, rotas: rotasComDestinos });
         }
+        completas.sort((a, b) => a.nmEtapa.localeCompare(b.nmEtapa, 'pt-BR'));
         setEtapas(completas);
       }
     } catch { /* interceptor */ }
