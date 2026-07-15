@@ -78,8 +78,23 @@ public class FileTransferService : IFileTransferService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!IsEligible(file, config))
+            if (!_maskMatcher.Match(file.Name, config.MascaraArq))
                 continue;
+
+            if (_lockChecker.IsFileLocked(file.FullName))
+            {
+                _logger.LogWarning("Arquivo em uso, ignorado: '{File}'.", file.Name);
+                await GravarLogArquivoAsync(
+                    cnLogProcesso, config, file.Name, sourceDirectory, destinationDirectory,
+                    file.Length, DateTime.UtcNow, "W", "Arquivo em uso (locked) — será tentado no próximo ciclo", false, false, cancellationToken);
+                continue;
+            }
+
+            if (!_sizeValidator.IsWithinRange(file.Length, config.TamanhoInicialArqBytes, config.TamanhoFinalArqBytes))
+            {
+                _logger.LogDebug("Arquivo fora da faixa de tamanho: '{File}' ({Size} bytes).", file.Name, file.Length);
+                continue;
+            }
 
             var dtInicioArquivo = DateTime.UtcNow;
             try
@@ -109,25 +124,6 @@ public class FileTransferService : IFileTransferService
         return new FileTransferResult(files.Length, succeeded, failed, errors);
     }
 
-    private bool IsEligible(FileInfo file, TransferPath config)
-    {
-        if (!_maskMatcher.Match(file.Name, config.MascaraArq))
-            return false;
-
-        if (_lockChecker.IsFileLocked(file.FullName))
-        {
-            _logger.LogWarning("Arquivo em uso, ignorado: '{File}'.", file.Name);
-            return false;
-        }
-
-        if (!_sizeValidator.IsWithinRange(file.Length, config.TamanhoInicialArqBytes, config.TamanhoFinalArqBytes))
-        {
-            _logger.LogDebug("Arquivo fora da faixa de tamanho: '{File}' ({Size} bytes).", file.Name, file.Length);
-            return false;
-        }
-
-        return true;
-    }
 
     private async Task<(bool Compressed, bool Decompressed)> ProcessFileAsync(
         FileInfo file,

@@ -27,8 +27,14 @@ export default function Dashboard() {
 
   const fetchErrosRecentes = async () => {
     try {
-      const { data } = await api.get<ApiResponse<PaginatedResponse<LogArquivo>>>('/logs/arquivos?status=E&pageSize=5');
-      if (data.success && data.data) setErrosRecentes(data.data.items);
+      // Busca erros e warnings recentes
+      const erros = await api.get<ApiResponse<PaginatedResponse<LogArquivo>>>('/logs/arquivos?status=E&pageSize=3');
+      const warnings = await api.get<ApiResponse<PaginatedResponse<LogArquivo>>>('/logs/arquivos?status=W&pageSize=3');
+      const items = [
+        ...(erros.data.data?.items ?? []),
+        ...(warnings.data.data?.items ?? []),
+      ].sort((a, b) => new Date(b.dtInicio).getTime() - new Date(a.dtInicio).getTime());
+      setErrosRecentes(items);
     } catch { /* handled by interceptor */ }
   };
 
@@ -85,15 +91,16 @@ export default function Dashboard() {
             </div>
             <div className="space-y-2">
               {errosRecentes.slice(0, 3).map((log) => (
-                <div key={log.cnLogArquivo} className="bg-red-950/40 rounded p-2">
+                <div key={log.cnLogArquivo} className={`rounded p-2 ${log.idStatus === 'E' ? 'bg-red-950/40' : 'bg-yellow-950/40'}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <span className="text-red-400 text-xs">●</span>
+                      <span className={`text-xs ${log.idStatus === 'E' ? 'text-red-400' : 'text-yellow-400'}`}>{log.idStatus === 'E' ? '●' : '◐'}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] ${log.idStatus === 'E' ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'}`}>{log.idStatus === 'E' ? 'ERRO' : 'AVISO'}</span>
                       <span className="font-mono text-xs text-gray-200">{log.nmArquivo}</span>
                     </div>
                     <span className="text-xs text-gray-600 whitespace-nowrap">{new Date(log.dtInicio).toLocaleString('pt-BR')}</span>
                   </div>
-                  <p className="text-xs text-red-300/70 mt-1 pl-5">{log.dsMensagem || 'Erro na transferência (verifique permissões ou disponibilidade do diretório)'}</p>
+                  <p className={`text-xs mt-1 pl-5 ${log.idStatus === 'E' ? 'text-red-300/70' : 'text-yellow-300/70'}`}>{log.dsMensagem || 'Verifique permissões ou disponibilidade do diretório'}</p>
                 </div>
               ))}
             </div>

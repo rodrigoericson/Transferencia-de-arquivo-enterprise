@@ -70,6 +70,7 @@ export default function Logs() {
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               <option value="">Todos</option>
               <option value="S">Sucesso</option>
+              <option value="W">Aviso</option>
               <option value="E">Erro</option>
             </select>
           </div>
@@ -117,8 +118,12 @@ export default function Logs() {
                     <td className="py-2 px-2 text-xs text-gray-400 truncate max-w-[180px]" title={l.dsDiretorioDestino}>{l.dsDiretorioDestino.split('/').pop()}</td>
                     <td className="py-2 px-2 text-xs">{formatBytes(l.nrTamanhoBytes)}</td>
                     <td className="py-2 px-2">
-                      <span className={`px-2 py-0.5 rounded text-xs ${l.idStatus === 'S' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                        {l.idStatus === 'S' ? 'Sucesso' : 'Erro'}
+                      <span className={`px-2 py-0.5 rounded text-xs ${
+                        l.idStatus === 'S' ? 'bg-green-900 text-green-300' :
+                        l.idStatus === 'W' ? 'bg-yellow-900 text-yellow-300' :
+                        'bg-red-900 text-red-300'
+                      }`}>
+                        {l.idStatus === 'S' ? 'Sucesso' : l.idStatus === 'W' ? 'Aviso' : 'Erro'}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-gray-400">{new Date(l.dtInicio).toLocaleTimeString('pt-BR')}</td>
