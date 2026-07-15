@@ -26,46 +26,61 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950">
-      <div className="mb-8">
-        <img src="/sta-logo.png" alt="STA" className="h-36 mx-auto" />
+    <div className="min-h-screen flex" style={{ backgroundColor: '#0b1118' }}>
+      {/* Lado esquerdo — Logo */}
+      <div className="hidden md:flex flex-1 items-center justify-center p-12">
+        <img src="/sta-logo.png" alt="STA" className="w-full max-w-md" />
       </div>
 
-      <div className="w-full max-w-sm p-8 bg-gray-900 rounded-lg border border-gray-800 shadow-lg shadow-green-900/10">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Usuário</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 focus:outline-none focus:border-green-500"
-              autoFocus
-            />
-          </div>
+      {/* Divisor */}
+      <div className="hidden md:block w-px bg-gray-800 my-16" />
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Senha</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 focus:outline-none focus:border-green-500"
-            />
-          </div>
+      {/* Lado direito — Formulário */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        {/* Logo mobile */}
+        <div className="md:hidden mb-8">
+          <img src="/sta-logo.png" alt="STA" className="h-28 mx-auto" />
+        </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+        <div className="w-full max-w-sm">
+          <h2 className="text-2xl font-semibold text-gray-100 mb-1">Bem-vindo</h2>
+          <p className="text-sm text-gray-500 mb-6">Entre com suas credenciais para acessar</p>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded font-medium disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Usuário</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2.5 bg-gray-800/80 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30"
+                autoFocus
+              />
+            </div>
 
-        <p className="text-center text-xs text-gray-600 mt-4">Sistema de Transferência de Arquivos</p>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2.5 bg-gray-800/80 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30"
+              />
+            </div>
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium disabled:opacity-50 transition-colors mt-2"
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-gray-700 mt-6">Sistema de Transferência de Arquivos</p>
+        </div>
       </div>
     </div>
   );
