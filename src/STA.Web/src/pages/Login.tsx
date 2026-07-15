@@ -26,7 +26,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#080d11' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#0a0b12' }}>
       {/* Lado esquerdo — Logo */}
       <div className="hidden md:flex flex-1 items-center justify-center p-12">
         <img src="/sta-logo.png" alt="STA" className="w-full max-w-md" />
