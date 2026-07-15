@@ -81,7 +81,7 @@ dotnet run
 dotnet test STA.sln
 ```
 
-> **💡 Ambientes:** em *Development* lê `appsettings.Development.json` (credenciais locais, gitignored). Em *Production* usa env vars (`STA_DB_CONN`, etc).
+> **💡 Ambientes:** em *Desenvolvimento* lê `appsettings.Development.json` (credenciais locais, gitignored). Em *Produção* usa env vars (`STA_DB_CONN`, etc).
 
 ## 📁 Estrutura
 
@@ -97,8 +97,7 @@ STA.sln                # Solução
 
 ## 💡 Por que esse repo existe
 
-Migração de VB.NET Framework 2.0 → .NET 10 não é trivial. Mas é o tipo de projeto que mostra **disciplina técnica**: refactor incremental, testes crescendo junto com features, sem big-bang rewrite.
-
+Migração de VB.NET Framework 2.0 → .NET 10 não é trivial. Mas é o tipo de projeto que mostra **disciplina técnica**: refactor incremental, testes crescendo junto com features.
 Cada commit conta parte da história. Leia em ordem:
 
 ```
