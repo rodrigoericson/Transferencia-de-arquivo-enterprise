@@ -8,16 +8,19 @@ public record DestinoDto(
     int NrOrdem,
     string DsDiretorioDestino,
     string? DsDescompactaDestino,
+    string? DsPadraoRename,
     bool FlAtivo);
 
 public record CreateDestinoDto(
     [Required] int CnRota,
     [Range(1, 9999)] int NrOrdem = 1,
     [Required][StringLength(500)] string DsDiretorioDestino = "",
-    [StringLength(10)] string? DsDescompactaDestino = null);
+    [StringLength(10)] string? DsDescompactaDestino = null,
+    [StringLength(200)] string? DsPadraoRename = null);
 
 public record UpdateDestinoDto(
     [Range(1, 9999)] int NrOrdem,
     [Required][StringLength(500)] string DsDiretorioDestino,
     [StringLength(10)] string? DsDescompactaDestino = null,
+    [StringLength(200)] string? DsPadraoRename = null,
     bool FlAtivo = true);

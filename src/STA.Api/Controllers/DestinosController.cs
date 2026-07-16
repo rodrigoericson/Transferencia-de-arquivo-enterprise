@@ -46,7 +46,7 @@ public class DestinosController : ControllerBase
                 d.CnRota,
                 d.NrOrdem,
                 d.DsDiretorioDestino,
-                d.DsDescompactaDestino,
+                d.DsDescompactaDestino, d.DsPadraoRename,
                 d.FlAtivo))
             .ToListAsync(ct);
 
@@ -65,7 +65,7 @@ public class DestinosController : ControllerBase
                 d.CnRota,
                 d.NrOrdem,
                 d.DsDiretorioDestino,
-                d.DsDescompactaDestino,
+                d.DsDescompactaDestino, d.DsPadraoRename,
                 d.FlAtivo))
             .FirstOrDefaultAsync(ct);
 
@@ -87,7 +87,7 @@ public class DestinosController : ControllerBase
             CnRota = dto.CnRota,
             NrOrdem = dto.NrOrdem,
             DsDiretorioDestino = dto.DsDiretorioDestino,
-            DsDescompactaDestino = dto.DsDescompactaDestino,
+            DsDescompactaDestino = dto.DsDescompactaDestino, DsPadraoRename = dto.DsPadraoRename,
             FlAtivo = true
         };
 
@@ -98,7 +98,7 @@ public class DestinosController : ControllerBase
 
         var result = new DestinoDto(
             destino.CnRotaDestino, destino.CnRota, destino.NrOrdem,
-            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.FlAtivo);
+            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename, destino.FlAtivo);
 
         return CreatedAtAction(nameof(GetById), new { id = destino.CnRotaDestino }, new ApiResponse<DestinoDto>(true, result));
     }
@@ -112,14 +112,14 @@ public class DestinosController : ControllerBase
 
         destino.NrOrdem = dto.NrOrdem;
         destino.DsDiretorioDestino = dto.DsDiretorioDestino;
-        destino.DsDescompactaDestino = dto.DsDescompactaDestino;
+        destino.DsDescompactaDestino = dto.DsDescompactaDestino; destino.DsPadraoRename = dto.DsPadraoRename;
         destino.FlAtivo = dto.FlAtivo;
 
         await _context.SaveChangesAsync(ct);
 
         var result = new DestinoDto(
             destino.CnRotaDestino, destino.CnRota, destino.NrOrdem,
-            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.FlAtivo);
+            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename, destino.FlAtivo);
 
         return Ok(new ApiResponse<DestinoDto>(true, result));
     }

@@ -12,6 +12,8 @@ public class RotaDestino
 
     public string? DsDescompactaDestino { get; set; }
 
+    public string? DsPadraoRename { get; set; }
+
     public bool FlAtivo { get; set; } = true;
 
     // Navigation property

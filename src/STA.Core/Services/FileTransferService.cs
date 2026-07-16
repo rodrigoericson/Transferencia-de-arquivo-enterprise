@@ -11,12 +11,14 @@ public record FileTransferResult(
     int FilesFailed,
     List<string> ErrorMessages);
 
+public record DestinoTransfer(string Diretorio, string? PadraoRename);
+
 public interface IFileTransferService
 {
     Task<FileTransferResult> TransferFanOutAsync(
         TransferPath config,
         string sourceDirectory,
-        IReadOnlyList<string> destinationDirectories,
+        IReadOnlyList<DestinoTransfer> destinos,
         bool overwriteExisting,
         int timeoutCompactacaoMs,
         int? cnLogProcesso,
@@ -54,7 +56,7 @@ public class FileTransferService : IFileTransferService
     public async Task<FileTransferResult> TransferFanOutAsync(
         TransferPath config,
         string sourceDirectory,
-        IReadOnlyList<string> destinationDirectories,
+        IReadOnlyList<DestinoTransfer> destinos,
         bool overwriteExisting,
         int timeoutCompactacaoMs,
         int? cnLogProcesso,
@@ -66,10 +68,10 @@ public class FileTransferService : IFileTransferService
             return new FileTransferResult(0, 0, 0, [$"Diretório de origem não existe: {sourceDirectory}"]);
         }
 
-        foreach (var destDir in destinationDirectories)
+        foreach (var dest in destinos)
         {
-            try { Directory.CreateDirectory(destDir); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de destino: '{Path}'.", destDir); }
+            try { Directory.CreateDirectory(dest.Diretorio); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de destino: '{Path}'.", dest.Diretorio); }
         }
         if (!string.IsNullOrWhiteSpace(config.DiretorioBackup))
         {
@@ -92,7 +94,7 @@ public class FileTransferService : IFileTransferService
             {
                 _logger.LogWarning("Arquivo em uso, ignorado: '{File}'.", file.Name);
                 await GravarLogArquivoAsync(
-                    cnLogProcesso, config, file.Name, sourceDirectory, destinationDirectories.FirstOrDefault() ?? "",
+                    cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
                     file.Length, DateTime.UtcNow, "W", "Arquivo em uso (locked) — será tentado no próximo ciclo", false, false, cancellationToken);
                 continue;
             }
@@ -118,18 +120,19 @@ public class FileTransferService : IFileTransferService
                 bool fanOutOk = true;
                 var destResults = new List<(string Dir, bool Ok, string? Erro)>();
 
-                foreach (var destDir in destinationDirectories)
+                foreach (var dest in destinos)
                 {
                     try
                     {
-                        CopyToDestination(filePath, fileName, destDir, overwriteExisting);
-                        destResults.Add((destDir, true, null));
+                        var destFileName = AplicarRename(fileName, dest.PadraoRename);
+                        CopyToDestination(filePath, destFileName, dest.Diretorio, overwriteExisting);
+                        destResults.Add((dest.Diretorio, true, null));
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Falha ao copiar '{File}' para '{Dest}'.", fileName, destDir);
-                        errors.Add($"{file.Name} → {destDir}: {ex.Message}");
-                        destResults.Add((destDir, false, ex.Message));
+                        _logger.LogError(ex, "Falha ao copiar '{File}' para '{Dest}'.", fileName, dest.Diretorio);
+                        errors.Add($"{file.Name} → {dest.Diretorio}: {ex.Message}");
+                        destResults.Add((dest.Diretorio, false, ex.Message));
                         fanOutOk = false;
                     }
                 }
@@ -144,7 +147,7 @@ public class FileTransferService : IFileTransferService
                 foreach (var (destDir, ok, erro) in destResults)
                 {
                     await GravarLogArquivoAsync(
-                        cnLogProcesso, config, fileName, sourceDirectory, destDir,
+                        cnLogProcesso, config, file.Name, sourceDirectory, destDir,
                         file.Length, dtInicioArquivo, ok ? "S" : "E", erro, compressed, false, cancellationToken);
                 }
 
@@ -157,7 +160,7 @@ public class FileTransferService : IFileTransferService
                 errors.Add($"{file.Name}: {ex.Message}");
                 _logger.LogError(ex, "Erro ao transferir '{File}'.", file.Name);
                 await GravarLogArquivoAsync(
-                    cnLogProcesso, config, file.Name, sourceDirectory, destinationDirectories.FirstOrDefault() ?? "",
+                    cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
                     file.Length, dtInicioArquivo, "E", ex.Message, compressed, false, cancellationToken);
             }
         }
@@ -266,6 +269,25 @@ public class FileTransferService : IFileTransferService
 
         if (File.Exists(originalPath))
             File.Delete(originalPath);
+    }
+
+    private static string AplicarRename(string originalFileName, string? padrao)
+    {
+        if (string.IsNullOrWhiteSpace(padrao))
+            return originalFileName;
+
+        var name = Path.GetFileNameWithoutExtension(originalFileName);
+        var ext = Path.GetExtension(originalFileName);
+        var now = DateTime.Now;
+
+        return padrao
+            .Replace("{NAME}", name)
+            .Replace("{EXT}", ext.TrimStart('.'))
+            .Replace("{DATE}", now.ToString("yyyyMMdd"))
+            .Replace("{YEAR}", now.ToString("yyyy"))
+            .Replace("{MONTH}", now.ToString("MM"))
+            .Replace("{DAY}", now.ToString("dd"))
+            .Replace("{TIME}", now.ToString("HHmmss"));
     }
 
     private void PurgeBackupIfNeeded(TransferPath config)

@@ -16,15 +16,15 @@ export default function NovaTransferencia() {
   const [mascara, setMascara] = useState('*');
   const [origem, setOrigem] = useState('');
   const [backup, setBackup] = useState('');
-  const [destinos, setDestinos] = useState<string[]>(['']);
+  const [destinos, setDestinos] = useState<{dir: string, rename: string}[]>([{dir: '', rename: ''}]);
   const [compactar, setCompactar] = useState(false);
   const [retencao, setRetencao] = useState(365);
 
-  const addDestino = () => setDestinos([...destinos, '']);
+  const addDestino = () => setDestinos([...destinos, {dir: '', rename: ''}]);
   const removeDestino = (i: number) => setDestinos(destinos.filter((_, idx) => idx !== i));
-  const updateDestino = (i: number, value: string) => {
+  const updateDestino = (i: number, field: 'dir' | 'rename', value: string) => {
     const copy = [...destinos];
-    copy[i] = value;
+    copy[i] = { ...copy[i], [field]: value };
     setDestinos(copy);
   };
 
@@ -34,7 +34,7 @@ export default function NovaTransferencia() {
 
     if (!nome.trim()) { setError('Nome da transferência é obrigatório.'); return; }
     if (!origem.trim()) { setError('Diretório de origem é obrigatório.'); return; }
-    if (destinos.filter(d => d.trim()).length === 0) { setError('Adicione pelo menos um destino.'); return; }
+    if (destinos.filter(d => d.dir.trim()).length === 0) { setError('Adicione pelo menos um destino.'); return; }
 
     setSaving(true);
     try {
@@ -58,12 +58,13 @@ export default function NovaTransferencia() {
       const cnRota = rotaRes.data.data.cnRota;
 
       // 3. Criar destinos
-      const destinosValidos = destinos.filter(d => d.trim());
+      const destinosValidos = destinos.filter(d => d.dir.trim());
       for (let i = 0; i < destinosValidos.length; i++) {
         await api.post('/destinos', {
           cnRota,
           nrOrdem: i + 1,
-          dsDiretorioDestino: destinosValidos[i].trim(),
+          dsDiretorioDestino: destinosValidos[i].dir.trim(),
+          dsPadraoRename: destinosValidos[i].rename.trim() || null,
         });
       }
 
@@ -136,22 +137,30 @@ export default function NovaTransferencia() {
           {/* Destinos */}
           <div className="bg-gray-900 p-4 rounded-lg border border-gray-800">
             <h2 className="text-sm text-blue-400 font-mono mb-3">📤 DESTINOS</h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {destinos.map((d, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <DiretorioInput
-                      value={d}
-                      onChange={(v) => updateDestino(i, v)}
-                      placeholder={`\\servidor\pasta\destino-${i + 1}`}
-                      validacao={resultado[`destino-${i}`]}
-                      onValidar={() => validar(`destino-${i}`, d)}
-                    />
+                <div key={i} className="space-y-1">
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <DiretorioInput
+                        value={d.dir}
+                        onChange={(v) => updateDestino(i, 'dir', v)}
+                        placeholder={`\\servidor\pasta\destino-${i + 1}`}
+                        validacao={resultado[`destino-${i}`]}
+                        onValidar={() => validar(`destino-${i}`, d.dir)}
+                      />
+                    </div>
+                    {destinos.length > 1 && (
+                      <button type="button" onClick={() => removeDestino(i)}
+                        className="px-2 pt-2 text-red-400 hover:text-red-300 text-lg">×</button>
+                    )}
                   </div>
-                  {destinos.length > 1 && (
-                    <button type="button" onClick={() => removeDestino(i)}
-                      className="px-2 pt-2 text-red-400 hover:text-red-300 text-lg">×</button>
-                  )}
+                  <input
+                    value={d.rename}
+                    onChange={(e) => updateDestino(i, 'rename', e.target.value)}
+                    placeholder="Renomear para: COBREM_{NAME}_ATIVOS_{DATE}.dat (opcional)"
+                    className="w-full ml-0 px-3 py-1.5 bg-gray-800/50 border border-gray-700/50 rounded text-gray-100 text-xs font-mono focus:outline-none focus:border-green-500"
+                  />
                 </div>
               ))}
             </div>
@@ -159,7 +168,9 @@ export default function NovaTransferencia() {
               className="mt-3 px-3 py-1.5 text-sm text-green-400 border border-green-700 hover:bg-green-900/30 rounded">
               + Adicionar outro destino
             </button>
-            <p className="text-xs text-gray-600 mt-2">O arquivo será copiado para cada destino listado (fan-out)</p>
+            <p className="text-xs text-gray-600 mt-2">
+              Variáveis: <code className="text-green-400">{'{NAME}'}</code>, <code className="text-green-400">{'{EXT}'}</code>, <code className="text-green-400">{'{DATE}'}</code>, <code className="text-green-400">{'{TIME}'}</code>
+            </p>
           </div>
 
           {/* Opções */}

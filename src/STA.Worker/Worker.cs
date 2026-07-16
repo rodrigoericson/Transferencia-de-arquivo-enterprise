@@ -250,12 +250,14 @@ public class Worker : BackgroundService
             if (chain.Nodes.Count < 2) continue;
 
             var origem = chain.Nodes[0];
-            var destinos = chain.Nodes.Skip(1).Select(n => n.DiretorioPrincipal).ToList();
+
+            // Buscar destinos com padrão de rename do banco
+            var destinosTransfer = await BuscarDestinosComRenameAsync(origem.CnRota, chain.Nodes, stoppingToken);
 
             var result = await transferService.TransferFanOutAsync(
                 origem,
                 origem.DiretorioPrincipal,
-                destinos,
+                destinosTransfer,
                 settings.SobreEscreverArquivos,
                 settings.TimeoutCompactacaoMs,
                 cnLogProcesso,
@@ -374,6 +376,34 @@ public class Worker : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Falha ao buscar parâmetros. Mantendo último snapshot válido.");
+        }
+    }
+
+    private async Task<IReadOnlyList<STA.Core.Services.DestinoTransfer>> BuscarDestinosComRenameAsync(
+        int? cnRota,
+        IReadOnlyList<STA.Core.Models.TransferPath> nodes,
+        CancellationToken stoppingToken)
+    {
+        if (cnRota is null)
+        {
+            // Fallback: sem rename, só pegar diretórios dos nós destino
+            return nodes.Skip(1).Select(n => new STA.Core.Services.DestinoTransfer(n.DiretorioPrincipal, null)).ToList();
+        }
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<STA.Core.Data.StaDbContext>();
+            var destinos = await context.RotaDestinos
+                .Where(d => d.CnRota == cnRota.Value && d.FlAtivo)
+                .OrderBy(d => d.NrOrdem)
+                .Select(d => new STA.Core.Services.DestinoTransfer(d.DsDiretorioDestino, d.DsPadraoRename))
+                .ToListAsync(stoppingToken);
+            return destinos;
+        }
+        catch
+        {
+            return nodes.Skip(1).Select(n => new STA.Core.Services.DestinoTransfer(n.DiretorioPrincipal, null)).ToList();
         }
     }
 
