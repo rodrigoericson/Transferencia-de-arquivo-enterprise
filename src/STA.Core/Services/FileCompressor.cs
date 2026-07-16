@@ -60,7 +60,9 @@ public class FileCompressor : IFileCompressor
             return false;
         }
 
-        var args = new[] { "a", $"-t{compressionType.ToLowerInvariant()}", outputArchivePath, sourceFilePath };
+        // -mx=3 = Fast (5-10x mais rápido que Ultra, ainda com boa compressão para envio em rede)
+        // Objetivo é enviar, não arquivar — não precisa do nível máximo
+        var args = new[] { "a", $"-t{compressionType.ToLowerInvariant()}", "-mx=3", outputArchivePath, sourceFilePath };
         return await RunProcessAsync(args, timeoutMs, cancellationToken);
     }
 
