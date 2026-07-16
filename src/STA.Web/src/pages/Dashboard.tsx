@@ -216,12 +216,20 @@ function ExecucaoBox({ execucao }: { execucao: Execucao }) {
     );
   }
 
+  const duracaoStr = execucao.duracaoUltimoCicloMs != null
+    ? execucao.duracaoUltimoCicloMs < 1000
+      ? `${execucao.duracaoUltimoCicloMs}ms`
+      : `${(execucao.duracaoUltimoCicloMs / 1000).toFixed(1)}s`
+    : null;
+
   return (
     <div className="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg flex items-center gap-3">
       <span className="text-green-400 text-lg">✓</span>
-      <span className="text-sm text-gray-300">Ciclo concluído</span>
+      <span className="text-sm text-gray-300">
+        Ciclo concluído{duracaoStr && <span className="text-gray-600"> {' '}em {duracaoStr}</span>}
+      </span>
       <span className="text-sm text-gray-500 ml-auto font-mono">
-        {countdown ? `Próximo em ${countdown}` : 'Próximo ciclo em breve'}
+        {countdown ? `Próximo em ${countdown}` : 'Aguardando...'}
       </span>
     </div>
   );

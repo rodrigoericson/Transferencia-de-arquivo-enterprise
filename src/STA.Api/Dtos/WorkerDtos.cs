@@ -13,4 +13,5 @@ public record ExecucaoDto(
     string? EtapaAtual,
     DateTime? CicloIniciadoEm,
     DateTime? UltimoCicloFim,
-    DateTime? ProximoCicloEm);
+    DateTime? ProximoCicloEm,
+    long? DuracaoUltimoCicloMs);

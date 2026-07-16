@@ -102,4 +102,5 @@ export interface Execucao {
   cicloIniciadoEm: string | null;
   ultimoCicloFim: string | null;
   proximoCicloEm: string | null;
+  duracaoUltimoCicloMs: number | null;
 }

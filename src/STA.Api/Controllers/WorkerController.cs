@@ -90,7 +90,21 @@ public class WorkerController : ControllerBase
         }
 
         var executando = cicloAberto is not null;
-        var proximoCiclo = ultimoCiclo?.DtFimProcesso?.AddMinutes(5);
+
+        // Calcula duração do último ciclo
+        TimeSpan? duracaoUltimoCiclo = null;
+        if (ultimoCiclo?.DtFimProcesso != null)
+            duracaoUltimoCiclo = ultimoCiclo.DtFimProcesso.Value - ultimoCiclo.DtInicio;
+
+        // Próximo ciclo: se o calculado já passou, assume agora + 5min (Worker vai rodar em breve)
+        DateTime? proximoCiclo = null;
+        if (!isPaused && !executando)
+        {
+            var calculado = ultimoCiclo?.DtFimProcesso?.AddMinutes(5);
+            proximoCiclo = (calculado != null && calculado > DateTime.UtcNow)
+                ? calculado
+                : DateTime.UtcNow.AddMinutes(5);
+        }
 
         var result = new ExecucaoDto(
             Executando: executando,
@@ -98,7 +112,8 @@ public class WorkerController : ControllerBase
             EtapaAtual: etapaAtual,
             CicloIniciadoEm: cicloAberto?.DtInicio,
             UltimoCicloFim: ultimoCiclo?.DtFimProcesso,
-            ProximoCicloEm: isPaused ? null : proximoCiclo
+            ProximoCicloEm: proximoCiclo,
+            DuracaoUltimoCicloMs: (long?)(duracaoUltimoCiclo?.TotalMilliseconds)
         );
 
         return Ok(new ApiResponse<ExecucaoDto>(true, result));
