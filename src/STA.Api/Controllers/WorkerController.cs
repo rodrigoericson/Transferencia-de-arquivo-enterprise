@@ -96,14 +96,12 @@ public class WorkerController : ControllerBase
         if (ultimoCiclo?.DtFimProcesso != null)
             duracaoUltimoCiclo = ultimoCiclo.DtFimProcesso.Value - ultimoCiclo.DtInicio;
 
-        // Próximo ciclo: se o calculado já passou, assume agora + 5min (Worker vai rodar em breve)
+        // Próximo ciclo: último fim + intervalo (5 min)
+        // Se já passou, não recalcula (frontend mostra "Aguardando")
         DateTime? proximoCiclo = null;
-        if (!isPaused && !executando)
+        if (!isPaused && !executando && ultimoCiclo?.DtFimProcesso != null)
         {
-            var calculado = ultimoCiclo?.DtFimProcesso?.AddMinutes(5);
-            proximoCiclo = (calculado != null && calculado > DateTime.UtcNow)
-                ? calculado
-                : DateTime.UtcNow.AddMinutes(5);
+            proximoCiclo = ultimoCiclo.DtFimProcesso.Value.AddMinutes(5);
         }
 
         var result = new ExecucaoDto(
