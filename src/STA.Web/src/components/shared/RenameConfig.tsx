@@ -39,25 +39,20 @@ export default function RenameConfig({ value, onChange }: Props) {
   }, []);
 
   // Gerar padrão a partir dos campos
-  useEffect(() => {
-    if (!ativo) {
+  const buildAndPropagate = (nAtivo: boolean, nNome: string, nData: boolean, nExt: boolean, nNovaExt: string) => {
+    if (!nAtivo || !nNome.trim()) {
       onChange('');
       return;
     }
-    if (!nome.trim()) {
-      onChange('');
-      return;
-    }
-
-    let padrao = nome.trim();
-    if (incluirData) padrao += '_{DATE}{TIME}';
-    if (alterarExt && novaExt.trim()) {
-      padrao += '.' + novaExt.trim().replace(/^\./, '');
+    let padrao = nNome.trim();
+    if (nData) padrao += '_{DATE}{TIME}';
+    if (nExt && nNovaExt.trim()) {
+      padrao += '.' + nNovaExt.trim().replace(/^\./, '');
     } else {
       padrao += '.{EXT}';
     }
     onChange(padrao);
-  }, [ativo, nome, incluirData, alterarExt, novaExt]);
+  };
 
   // Preview
   const gerarPreview = () => {
@@ -89,7 +84,7 @@ export default function RenameConfig({ value, onChange }: Props) {
   return (
     <div className="mt-2 p-3 bg-gray-800/50 rounded border border-gray-700/50 space-y-2">
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="rename-ativo" checked={true} onChange={() => { setAtivo(false); setNome(''); }} className="w-3.5 h-3.5" />
+        <input type="checkbox" id="rename-ativo" checked={true} onChange={() => { setAtivo(false); setNome(''); onChange(''); }} className="w-3.5 h-3.5" />
         <label htmlFor="rename-ativo" className="text-xs text-gray-400 font-medium">Renomear arquivo</label>
       </div>
 
@@ -97,24 +92,24 @@ export default function RenameConfig({ value, onChange }: Props) {
         <label className="block text-xs text-gray-500 mb-1">Novo nome (obrigatório)</label>
         <input
           value={nome}
-          onChange={(e) => setNome(e.target.value)}
+          onChange={(e) => { setNome(e.target.value); buildAndPropagate(ativo, e.target.value, incluirData, alterarExt, novaExt); }}
           placeholder="COBREM_SANTANDER"
           className="w-full px-2 py-1.5 bg-gray-800 border border-gray-700 rounded text-gray-100 text-xs font-mono focus:outline-none focus:border-green-500"
         />
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="incluir-data" checked={incluirData} onChange={(e) => setIncluirData(e.target.checked)} className="w-3.5 h-3.5" />
+        <input type="checkbox" id="incluir-data" checked={incluirData} onChange={(e) => { setIncluirData(e.target.checked); buildAndPropagate(ativo, nome, e.target.checked, alterarExt, novaExt); }} className="w-3.5 h-3.5" />
         <label htmlFor="incluir-data" className="text-xs text-gray-400">Incluir data e hora (YYYYMMDDHHMMSS)</label>
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="alterar-ext" checked={alterarExt} onChange={(e) => setAlterarExt(e.target.checked)} className="w-3.5 h-3.5" />
+        <input type="checkbox" id="alterar-ext" checked={alterarExt} onChange={(e) => { setAlterarExt(e.target.checked); buildAndPropagate(ativo, nome, incluirData, e.target.checked, novaExt); }} className="w-3.5 h-3.5" />
         <label htmlFor="alterar-ext" className="text-xs text-gray-400">Alterar extensão</label>
         {alterarExt && (
           <input
             value={novaExt}
-            onChange={(e) => setNovaExt(e.target.value)}
+            onChange={(e) => { setNovaExt(e.target.value); buildAndPropagate(ativo, nome, incluirData, alterarExt, e.target.value); }}
             placeholder="dat"
             className="w-20 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-100 text-xs font-mono focus:outline-none focus:border-green-500"
           />
