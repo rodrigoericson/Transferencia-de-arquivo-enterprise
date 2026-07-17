@@ -6,7 +6,7 @@ using STA.Core.Data.Repositories;
 
 namespace STA.Api.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/v1/auditoria")]
 [Produces("application/json")]
