@@ -9,8 +9,6 @@ export default function Dashboard() {
   const [errosRecentes, setErrosRecentes] = useState<LogArquivo[]>([]);
   const [execucao, setExecucao] = useState<Execucao | null>(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<string | null>(null);
-  useEffect(() => { setRole(sessionStorage.getItem('sta_role')); }, []);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -128,7 +126,7 @@ export default function Dashboard() {
         )}
 
         {/* Worker Control (Admin only) */}
-        {(role === 'Admin') && (
+        {sessionStorage.getItem('sta_role') === 'Admin' && (
           <div className="flex gap-3 mb-8">
             {status?.status === 'rodando' ? (
               <button onClick={handlePause} className="px-4 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 rounded">Pausar Worker</button>
@@ -142,7 +140,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NavCard title="Transferências" description="Ver etapas, rotas e destinos" onClick={() => navigate('/etapas')} />
           <NavCard title="Logs" description="Ver registros de transferência de hoje" onClick={() => navigate('/logs')} />
-          {role !== 'Viewer' && (
+          {sessionStorage.getItem('sta_role') !== 'Viewer' && (
             <NavCard title="Nova Transferência" description="Criar nova cadeia de transferência" onClick={() => navigate('/etapas/nova')} accent />
           )}
         </div>

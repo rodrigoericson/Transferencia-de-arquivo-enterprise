@@ -12,9 +12,7 @@ export default function Etapas() {
   const [etapas, setEtapas] = useState<EtapaCompleta[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [role, setRole] = useState<string | null>(null);
-  useEffect(() => { setRole(sessionStorage.getItem('sta_role')); }, []);
-  const canEdit = role === 'Admin' || role === 'Operator';
+  const canEdit = sessionStorage.getItem('sta_role') === 'Admin' || sessionStorage.getItem('sta_role') === 'Operator';
 
   useEffect(() => { fetchEtapas(); }, []);
 
