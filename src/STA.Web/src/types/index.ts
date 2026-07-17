@@ -104,3 +104,14 @@ export interface Execucao {
   proximoCicloEm: string | null;
   duracaoUltimoCicloMs: number | null;
 }
+
+export interface Auditoria {
+  cnAuditoria: number;
+  cnUsuario: number | null;
+  nmUsuario: string;
+  idEntidade: string;
+  idReferencia: number;
+  idAcao: string;
+  dtAcao: string;
+  dsDetalhe: string | null;
+}
