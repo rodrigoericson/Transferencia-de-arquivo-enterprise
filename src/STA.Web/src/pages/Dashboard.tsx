@@ -137,14 +137,14 @@ export default function Dashboard() {
         )}
 
         {/* Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {sessionStorage.getItem('sta_role') !== 'Viewer' && (
+            <NavCard title="Nova Transferência" description="Criar nova cadeia de transferência" onClick={() => navigate('/etapas/nova')} accent />
+          )}
           <NavCard title="Transferências" description="Ver etapas, rotas e destinos" onClick={() => navigate('/etapas')} />
           <NavCard title="Logs" description="Ver registros de transferência de hoje" onClick={() => navigate('/logs')} />
           {sessionStorage.getItem('sta_role') === 'Admin' && (
             <NavCard title="Auditoria" description="Ver histórico de ações no sistema" onClick={() => navigate('/auditoria')} />
-          )}
-          {sessionStorage.getItem('sta_role') !== 'Viewer' && (
-            <NavCard title="Nova Transferência" description="Criar nova cadeia de transferência" onClick={() => navigate('/etapas/nova')} accent />
           )}
         </div>
 
