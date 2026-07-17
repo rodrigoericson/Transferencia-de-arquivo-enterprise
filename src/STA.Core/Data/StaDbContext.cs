@@ -23,6 +23,7 @@ public class StaDbContext : DbContext
     public DbSet<RotaDestino> RotaDestinos { get; set; } = null!;
     public DbSet<LogArquivo> LogArquivos { get; set; } = null!;
     public DbSet<Usuario> Usuarios { get; set; } = null!;
+    public DbSet<Auditoria> Auditorias { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,7 @@ public class StaDbContext : DbContext
         ConfigureRotaDestino(modelBuilder.Entity<RotaDestino>());
         ConfigureLogArquivo(modelBuilder.Entity<LogArquivo>());
         ConfigureUsuario(modelBuilder.Entity<Usuario>());
+        ConfigureAuditoria(modelBuilder.Entity<Auditoria>());
     }
 
     private static void ConfigureSistema(EntityTypeBuilder<Sistema> builder)
@@ -456,5 +458,54 @@ public class StaDbContext : DbContext
             .HasColumnName("dt_ultimo_login");
 
         builder.HasIndex(u => u.NmUsuario).IsUnique();
+    }
+
+    private static void ConfigureAuditoria(EntityTypeBuilder<Auditoria> builder)
+    {
+        builder.ToTable("tbl_auditoria");
+
+        builder.HasKey(a => a.CnAuditoria);
+
+        builder.Property(a => a.CnAuditoria)
+            .HasColumnName("cn_auditoria")
+            .ValueGeneratedOnAdd();
+
+        builder.Property(a => a.CnUsuario)
+            .HasColumnName("cn_usuario");
+
+        builder.Property(a => a.NmUsuario)
+            .HasColumnName("nm_usuario")
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(a => a.IdEntidade)
+            .HasColumnName("id_entidade")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(a => a.IdReferencia)
+            .HasColumnName("id_referencia");
+
+        builder.Property(a => a.IdAcao)
+            .HasColumnName("id_acao")
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.Property(a => a.DtAcao)
+            .HasColumnName("dt_acao")
+            .HasDefaultValueSql("NOW()");
+
+        builder.Property(a => a.DsDetalhe)
+            .HasColumnName("ds_detalhe")
+            .HasColumnType("text");
+
+        builder.HasOne<Usuario>()
+            .WithMany()
+            .HasForeignKey(a => a.CnUsuario)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(a => a.DtAcao).IsDescending();
+        builder.HasIndex(a => a.NmUsuario);
+        builder.HasIndex(a => new { a.IdEntidade, a.IdAcao });
     }
 }
