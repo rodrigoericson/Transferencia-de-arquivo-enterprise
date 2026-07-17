@@ -9,6 +9,7 @@ using STA.Core.Data.Repositories;
 using STA.Core.Services;
 using STA.Core.Settings;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables(prefix: "STA_");
@@ -35,6 +36,10 @@ builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IEtapaRepository, EtapaRepository>();
 builder.Services.AddScoped<ILogArquivoRepository, LogArquivoRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]

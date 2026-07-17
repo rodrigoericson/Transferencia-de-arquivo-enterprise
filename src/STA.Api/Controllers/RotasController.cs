@@ -5,6 +5,7 @@ using STA.Api.Common;
 using STA.Api.Dtos;
 using STA.Core.Data;
 using STA.Core.Data.Entities;
+using STA.Core.Services;
 
 namespace STA.Api.Controllers;
 
@@ -14,10 +15,12 @@ namespace STA.Api.Controllers;
 public class RotasController : ControllerBase
 {
     private readonly StaDbContext _context;
+    private readonly IAuditService _audit;
 
-    public RotasController(StaDbContext context)
+    public RotasController(StaDbContext context, IAuditService audit)
     {
         _context = context;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -114,6 +117,7 @@ public class RotasController : ControllerBase
 
         _context.Rotas.Add(rota);
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ROTA", rota.CnRota, "CREATE", rota.DsDiretorioOrigem, ct);
 
         TryCriarDiretorio(rota.DsDiretorioOrigem);
         TryCriarDiretorio(rota.DsDiretorioBackup);
@@ -147,6 +151,7 @@ public class RotasController : ControllerBase
         rota.FlAtivo = dto.FlAtivo;
 
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ROTA", rota.CnRota, "UPDATE", rota.DsDiretorioOrigem, ct);
 
         var destinosCount = await _context.RotaDestinos.CountAsync(d => d.CnRota == id, ct);
         var result = new RotaDto(
@@ -166,8 +171,10 @@ public class RotasController : ControllerBase
         if (rota is null)
             return NotFound(new ApiResponse<object>(false, null, "Rota não encontrada."));
 
+        var dsDiretorioOrigem = rota.DsDiretorioOrigem;
         _context.Rotas.Remove(rota);
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ROTA", id, "DELETE", dsDiretorioOrigem, ct);
 
         return Ok(new ApiResponse<object>(true, null, "Rota removida."));
     }

@@ -5,6 +5,7 @@ using STA.Api.Common;
 using STA.Api.Dtos;
 using STA.Core.Data;
 using STA.Core.Data.Entities;
+using STA.Core.Services;
 
 namespace STA.Api.Controllers;
 
@@ -16,10 +17,12 @@ public class WorkerController : ControllerBase
     private const int COD_WORKER_PAUSED = 4;
 
     private readonly StaDbContext _context;
+    private readonly IAuditService _audit;
 
-    public WorkerController(StaDbContext context)
+    public WorkerController(StaDbContext context, IAuditService audit)
     {
         _context = context;
+        _audit = audit;
     }
 
     [HttpGet("status")]
@@ -122,6 +125,7 @@ public class WorkerController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> Pause(CancellationToken ct = default)
     {
         await SetPausedAsync(true, ct);
+        await _audit.RegistrarAsync("WORKER", 0, "PAUSE", null, ct);
         return Ok(new ApiResponse<object>(true, null, "Worker pausado. O ciclo atual será concluído antes da pausa."));
     }
 
@@ -130,6 +134,7 @@ public class WorkerController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> Resume(CancellationToken ct = default)
     {
         await SetPausedAsync(false, ct);
+        await _audit.RegistrarAsync("WORKER", 0, "RESUME", null, ct);
         return Ok(new ApiResponse<object>(true, null, "Worker retomado. Próximo ciclo será executado normalmente."));
     }
 

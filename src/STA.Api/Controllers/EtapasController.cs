@@ -5,6 +5,7 @@ using STA.Api.Common;
 using STA.Api.Dtos;
 using STA.Core.Data;
 using STA.Core.Data.Entities;
+using STA.Core.Services;
 
 namespace STA.Api.Controllers;
 
@@ -15,10 +16,12 @@ namespace STA.Api.Controllers;
 public class EtapasController : ControllerBase
 {
     private readonly StaDbContext _context;
+    private readonly IAuditService _audit;
 
-    public EtapasController(StaDbContext context)
+    public EtapasController(StaDbContext context, IAuditService audit)
     {
         _context = context;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -109,6 +112,7 @@ public class EtapasController : ControllerBase
 
         _context.Etapas.Add(etapa);
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ETAPA", etapa.CnEtapa, "CREATE", etapa.NmEtapa, ct);
 
         var result = new EtapaDto(
             etapa.CnEtapa, etapa.CnSistema, etapa.NmEtapa, etapa.FlAtivo,
@@ -135,6 +139,7 @@ public class EtapasController : ControllerBase
         etapa.DtAlteracao = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ETAPA", etapa.CnEtapa, "UPDATE", etapa.NmEtapa, ct);
 
         var rotasCount = await _context.Rotas.CountAsync(r => r.CnEtapa == id, ct);
         var result = new EtapaDto(
@@ -153,8 +158,10 @@ public class EtapasController : ControllerBase
         if (etapa is null)
             return NotFound(new ApiResponse<object>(false, null, "Etapa não encontrada."));
 
+        var nmEtapa = etapa.NmEtapa;
         _context.Etapas.Remove(etapa);
         await _context.SaveChangesAsync(ct);
+        await _audit.RegistrarAsync("ETAPA", id, "DELETE", nmEtapa, ct);
 
         return Ok(new ApiResponse<object>(true, null, "Etapa removida."));
     }
