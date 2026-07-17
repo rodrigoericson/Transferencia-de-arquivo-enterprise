@@ -308,6 +308,10 @@ public class StaDbContext : DbContext
             .HasColumnName("ds_descompacta_destino")
             .HasMaxLength(10);
 
+        builder.Property(d => d.DsPadraoRename)
+            .HasColumnName("DsPadraoRename")
+            .HasMaxLength(200);
+
         builder.Property(d => d.FlAtivo)
             .HasColumnName("fl_ativo")
             .HasDefaultValue(true);
