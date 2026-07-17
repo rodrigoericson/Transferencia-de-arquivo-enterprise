@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using STA.Api.Common;
 using STA.Api.Dtos;
+using STA.Core.Data.Repositories;
 using STA.Core.Services;
 
 namespace STA.Api.Controllers;
@@ -18,11 +19,13 @@ public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
     private readonly IAuthService _authService;
+    private readonly IAuditService _audit;
 
-    public AuthController(IConfiguration config, IAuthService authService)
+    public AuthController(IConfiguration config, IAuthService authService, IAuditService audit)
     {
         _config = config;
         _authService = authService;
+        _audit = audit;
     }
 
     [EnableRateLimiting("login")]
@@ -34,9 +37,11 @@ public class AuthController : ControllerBase
         if (!result.Success)
             return Unauthorized(new ApiResponse<LoginResponse>(false, null, result.ErrorMessage ?? "Credenciais inválidas."));
 
-        var token = GenerateToken(result.Username!, result.Role!);
+        var token = GenerateToken(result.Username!, result.Role!, result.CnUsuario);
         var expiration = DateTime.UtcNow.AddHours(
             double.Parse(_config["Jwt:ExpirationHours"] ?? "8"));
+
+        await _audit.RegistrarAsync("AUTH", 0, "LOGIN", result.Username, ct);
 
         var response = new LoginResponse(token, expiration, result.Username!, result.Role!);
         return Ok(new ApiResponse<LoginResponse>(true, response));
@@ -62,11 +67,12 @@ public class AuthController : ControllerBase
 
         usuario.DsSenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha, 12);
         await SaveAsync(ct);
+        await _audit.RegistrarAsync("AUTH", 0, "PASSWORD", username, ct);
 
         return Ok(new ApiResponse<object>(true, null, "Senha alterada com sucesso."));
     }
 
-    private string GenerateToken(string username, string role)
+    private string GenerateToken(string username, string role, int? cnUsuario)
     {
         var secret = _config["Jwt:Secret"]!;
         var issuer = _config["Jwt:Issuer"] ?? "STA.Api";
@@ -76,17 +82,20 @@ public class AuthController : ControllerBase
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, username),
             new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        if (cnUsuario.HasValue)
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, cnUsuario.Value.ToString()));
+
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
-            claims: claims,
+            claims: claims.AsEnumerable(),
             expires: DateTime.UtcNow.AddHours(hours),
             signingCredentials: credentials);
 

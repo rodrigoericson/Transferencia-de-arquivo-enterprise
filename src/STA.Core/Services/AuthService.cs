@@ -8,7 +8,7 @@ using STA.Core.Data.Entities;
 
 namespace STA.Core.Services;
 
-public record AuthResult(bool Success, string? Username, string? DisplayName, string? Role, string? ErrorMessage);
+public record AuthResult(bool Success, string? Username, string? DisplayName, string? Role, string? ErrorMessage, int? CnUsuario = null);
 
 public interface IAuthService
 {
@@ -41,8 +41,8 @@ public class AuthService : IAuthService
             if (ldapResult.Success)
             {
                 _logger.LogInformation("Login via LDAP bem-sucedido: '{User}'.", username);
-                await RegistrarLoginAsync(username, ldapResult.Role ?? "Viewer", ct);
-                return ldapResult;
+                var cnUsuario = await UpsertUsuarioLdapAsync(username, ldapResult.DisplayName ?? username, ldapResult.Role ?? "Viewer", ct);
+                return ldapResult with { CnUsuario = cnUsuario };
             }
         }
 
@@ -152,19 +152,37 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation("Login local bem-sucedido: '{User}'.", username);
-        return new AuthResult(true, usuario.NmUsuario, usuario.NmDisplay, usuario.IdRole, null);
+        return new AuthResult(true, usuario.NmUsuario, usuario.NmDisplay, usuario.IdRole, null, usuario.CnUsuario);
     }
 
-    private async Task RegistrarLoginAsync(string username, string role, CancellationToken ct)
+    private async Task<int> UpsertUsuarioLdapAsync(string username, string displayName, string role, CancellationToken ct)
     {
         var usuario = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.NmUsuario == username, ct);
 
         if (usuario is not null)
         {
+            usuario.NmDisplay = displayName;
+            usuario.IdRole = role;
             usuario.DtUltimoLogin = DateTime.UtcNow;
             usuario.NrTentativasFalhas = 0;
-            await _context.SaveChangesAsync(ct);
         }
+        else
+        {
+            usuario = new Usuario
+            {
+                NmUsuario = username,
+                NmDisplay = displayName,
+                DsSenhaHash = "!",
+                IdRole = role,
+                FlAtivo = true,
+                DtCriacao = DateTime.UtcNow,
+                DtUltimoLogin = DateTime.UtcNow
+            };
+            _context.Usuarios.Add(usuario);
+        }
+
+        await _context.SaveChangesAsync(ct);
+        return usuario.CnUsuario;
     }
 }
