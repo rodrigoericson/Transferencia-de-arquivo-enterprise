@@ -75,6 +75,7 @@ public class DestinosController : ControllerBase
         return Ok(new ApiResponse<DestinoDto>(true, destino));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<DestinoDto>>> Create([FromBody] CreateDestinoDto dto, CancellationToken ct = default)
     {
@@ -103,6 +104,7 @@ public class DestinosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = destino.CnRotaDestino }, new ApiResponse<DestinoDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<DestinoDto>>> Update(int id, [FromBody] UpdateDestinoDto dto, CancellationToken ct = default)
     {
@@ -124,6 +126,7 @@ public class DestinosController : ControllerBase
         return Ok(new ApiResponse<DestinoDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(int id, CancellationToken ct = default)
     {

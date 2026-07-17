@@ -117,6 +117,7 @@ public class WorkerController : ControllerBase
         return Ok(new ApiResponse<ExecucaoDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("pause")]
     public async Task<ActionResult<ApiResponse<object>>> Pause(CancellationToken ct = default)
     {
@@ -124,6 +125,7 @@ public class WorkerController : ControllerBase
         return Ok(new ApiResponse<object>(true, null, "Worker pausado. O ciclo atual será concluído antes da pausa."));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("resume")]
     public async Task<ActionResult<ApiResponse<object>>> Resume(CancellationToken ct = default)
     {

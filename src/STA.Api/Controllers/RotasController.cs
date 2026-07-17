@@ -89,6 +89,7 @@ public class RotasController : ControllerBase
         return Ok(new ApiResponse<RotaDto>(true, rota));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<RotaDto>>> Create([FromBody] CreateRotaDto dto, CancellationToken ct = default)
     {
@@ -126,6 +127,7 @@ public class RotasController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = rota.CnRota }, new ApiResponse<RotaDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<RotaDto>>> Update(int id, [FromBody] UpdateRotaDto dto, CancellationToken ct = default)
     {
@@ -156,6 +158,7 @@ public class RotasController : ControllerBase
         return Ok(new ApiResponse<RotaDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(int id, CancellationToken ct = default)
     {

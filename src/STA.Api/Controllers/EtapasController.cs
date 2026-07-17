@@ -11,6 +11,7 @@ namespace STA.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/etapas")]
+[Produces("application/json")]
 public class EtapasController : ControllerBase
 {
     private readonly StaDbContext _context;
@@ -82,6 +83,7 @@ public class EtapasController : ControllerBase
         return Ok(new ApiResponse<EtapaDto>(true, etapa));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<EtapaDto>>> Create([FromBody] CreateEtapaDto dto, CancellationToken ct = default)
     {
@@ -116,6 +118,7 @@ public class EtapasController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = etapa.CnEtapa }, new ApiResponse<EtapaDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<EtapaDto>>> Update(int id, [FromBody] UpdateEtapaDto dto, CancellationToken ct = default)
     {
@@ -142,6 +145,7 @@ public class EtapasController : ControllerBase
         return Ok(new ApiResponse<EtapaDto>(true, result));
     }
 
+    [Authorize(Roles = "Admin,Operator")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(int id, CancellationToken ct = default)
     {
