@@ -59,6 +59,7 @@ export default function Destinos() {
               <th className="py-2 px-3">#</th>
               <th className="py-2 px-3">Diretório Destino</th>
               <th className="py-2 px-3">Descompacta</th>
+              <th className="py-2 px-3">Rename</th>
               <th className="py-2 px-3">Status</th>
               <th className="py-2 px-3">Ações</th>
             </tr>
@@ -69,6 +70,7 @@ export default function Destinos() {
                 <td className="py-2 px-3 text-gray-500">{d.nrOrdem}</td>
                 <td className="py-2 px-3 font-mono text-xs">{d.dsDiretorioDestino}</td>
                 <td className="py-2 px-3 text-xs">{d.dsDescompactaDestino || '-'}</td>
+                <td className="py-2 px-3 text-xs font-mono text-yellow-400">{d.dsPadraoRename || '-'}</td>
                 <td className="py-2 px-3">
                   <span className={`px-2 py-0.5 rounded text-xs ${d.flAtivo ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
                     {d.flAtivo ? 'Ativo' : 'Inativo'}
@@ -101,6 +103,7 @@ interface DestinoForm {
   nrOrdem: number;
   dsDiretorioDestino: string;
   dsDescompactaDestino: string;
+  dsPadraoRename: string;
   flAtivo: boolean;
 }
 
@@ -113,6 +116,7 @@ function DestinoFormModal({ initial, onSave, onCancel }: {
     nrOrdem: initial?.nrOrdem ?? 1,
     dsDiretorioDestino: initial?.dsDiretorioDestino ?? '',
     dsDescompactaDestino: initial?.dsDescompactaDestino ?? '',
+    dsPadraoRename: initial?.dsPadraoRename ?? '',
     flAtivo: initial?.flAtivo ?? true,
   });
 
@@ -144,6 +148,14 @@ function DestinoFormModal({ initial, onSave, onCancel }: {
             <input type="number" value={form.nrOrdem} onChange={(e) => set('nrOrdem', Number(e.target.value))}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Padrão de Rename <span className="text-gray-600">(opcional)</span></label>
+          <input value={form.dsPadraoRename} onChange={(e) => set('dsPadraoRename', e.target.value)}
+            placeholder="Ex: {NAME}_{DATE}{EXT}"
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
+          <p className="text-xs text-gray-600 mt-1">Placeholders: {'{NAME}'} {'{DATE}'} {'{TIME}'} {'{EXT}'}</p>
         </div>
 
         {initial && (

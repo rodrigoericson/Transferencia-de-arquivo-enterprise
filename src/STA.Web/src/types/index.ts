@@ -48,6 +48,7 @@ export interface Destino {
   nrOrdem: number;
   dsDiretorioDestino: string;
   dsDescompactaDestino: string | null;
+  dsPadraoRename: string | null;
   flAtivo: boolean;
 }
 
