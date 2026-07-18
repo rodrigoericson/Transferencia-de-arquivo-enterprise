@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import type { ApiResponse, PaginatedResponse, Rota, Destino } from '../types';
 import Header from '../components/layout/Header';
+import RenameConfig from '../components/shared/RenameConfig';
 
 export default function EditarTransferencia() {
   const { etapaId } = useParams<{ etapaId: string }>();
@@ -185,11 +186,10 @@ export default function EditarTransferencia() {
                         className="px-2 text-red-400 hover:text-red-300 text-lg">×</button>
                     )}
                   </div>
-                  <div>
-                    <input value={d.rename} onChange={(e) => updateDestino(i, 'rename', e.target.value)}
-                      placeholder="Rename (opcional): {NAME}_{DATE}{EXT}"
-                      className="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-yellow-400 text-xs font-mono focus:outline-none focus:border-yellow-500" />
-                  </div>
+                  <RenameConfig
+                    value={d.rename}
+                    onChange={(v) => updateDestino(i, 'rename', v)}
+                  />
                 </div>
               ))}
             </div>
