@@ -33,7 +33,7 @@ Serviço Windows para automatizar a transferência de arquivos entre servidores,
 * Rename por destino com placeholders (`{NAME}`, `{DATE}`, `{TIME}`, `{EXT}`)
 * Registro detalhado por arquivo (log granular)
 * Pause/Resume do Worker sem restart
-* **API REST completa** (23+ endpoints, JWT, Rate Limiting)
+* **API REST completa** (28 endpoints, JWT, Rate Limiting)
 * **Frontend React** (Dashboard, CRUD, Logs, Auditoria)
 * **Segurança**: AD/LDAP (Samba) + BCrypt fallback + Roles (Admin/Operator/Viewer)
 * **Audit trail**: registra quem fez o quê no sistema (somente Admin)
@@ -106,7 +106,7 @@ DOCS.md                  # Documentação técnica completa
 ┌──────────────────────▼──────────────────────┐
 │              API REST (.NET 10)              │
 │  Auth • Etapas • Rotas • Destinos • Worker  │
-│  Logs • Auditoria • Health • Rate Limiting  │
+│  Logs • Auditoria • Diretórios • Health      │
 └──────────────────────┬──────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────┐
@@ -145,7 +145,7 @@ DOCS.md                  # Documentação técnica completa
 * ✅ Worker Service com janela horária
 * ✅ Transferência com fan-out + compactação
 * ✅ Log granular por arquivo
-* ✅ API REST completa (23+ endpoints)
+* ✅ API REST completa (28 endpoints)
 * ✅ Frontend React (Dashboard, CRUD, Logs)
 * ✅ Segurança (AD/LDAP + BCrypt + Roles + Rate Limiting)
 * ✅ Rename por destino (placeholders)
