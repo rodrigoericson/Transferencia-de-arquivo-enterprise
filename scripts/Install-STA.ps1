@@ -50,7 +50,7 @@ param(
     [string]$InstallPath = 'C:\TAE-STA',
 
     [string]$DbHost,
-    [string]$DbName = 'sta',
+    [string]$DbName,
     [string]$DbUser,
     [SecureString]$DbPassword,
 
@@ -80,8 +80,12 @@ if (-not $DbHost) {
     $DbHost = Read-Host "Host do PostgreSQL (ex: localhost)"
 }
 
+if (-not $DbName) {
+    $DbName = Read-Host "Nome do banco de dados (ex: sta)"
+}
+
 if (-not $DbUser) {
-    $DbUser = Read-Host "Usuário do banco (ex: sta_user)"
+    $DbUser = Read-Host "Usuario do banco (ex: sta_user)"
 }
 
 if (-not $DbPassword) {
