@@ -58,6 +58,9 @@ param(
     [SecureString]$AdminPassword,
     [string]$FrontendUrl = 'http://localhost:3000',
 
+    [string]$ServiceAccount,
+    [SecureString]$ServicePassword,
+
     [switch]$SkipIIS,
     [switch]$SkipMigrations
 )
@@ -100,6 +103,21 @@ if (-not $JwtSecret -or $JwtSecret.Length -lt 32) {
 if (-not $AdminPassword) {
     $AdminPassword = Read-Host "Senha do admin inicial" -AsSecureString
 }
+
+if (-not $ServiceAccount) {
+    Write-Host ""
+    Write-Host "  Conta de servico: usuario de dominio com acesso as pastas UNC" -ForegroundColor Yellow
+    Write-Host "  (ex: DOMINIO\svc-tae-sta). Deixe vazio para usar LocalSystem (sem acesso a rede)." -ForegroundColor Yellow
+    $ServiceAccount = Read-Host "Conta de servico (vazio = LocalSystem)"
+}
+
+if ($ServiceAccount -and -not $ServicePassword) {
+    $ServicePassword = Read-Host "Senha da conta de servico" -AsSecureString
+}
+
+$ServicePasswordPlain = if ($ServicePassword) {
+    [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServicePassword))
+} else { $null }
 
 $DbPasswordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($DbPassword))
 $AdminPasswordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($AdminPassword))
@@ -234,7 +252,14 @@ if ($existingService) {
     Start-Sleep -Seconds 2
 }
 
-sc.exe create $serviceName binPath= "`"$serviceExe`"" start= auto displayname= "TAE-STA Worker - Transferencia de Arquivos" | Out-Null
+if ($ServiceAccount) {
+    sc.exe create $serviceName binPath= "`"$serviceExe`"" start= auto obj= "$ServiceAccount" password= "$ServicePasswordPlain" displayname= "TAE-STA Worker - Transferencia de Arquivos" | Out-Null
+    Write-Host "  Servico configurado com conta: $ServiceAccount" -ForegroundColor Gray
+} else {
+    sc.exe create $serviceName binPath= "`"$serviceExe`"" start= auto displayname= "TAE-STA Worker - Transferencia de Arquivos" | Out-Null
+    Write-Host "  Servico configurado com LocalSystem (sem acesso a rede)." -ForegroundColor Yellow
+    Write-Host "  Para acessar pastas UNC, altere a conta em services.msc." -ForegroundColor Yellow
+}
 sc.exe description $serviceName "Servico de transferencia automatica de arquivos (TAE-STA)" | Out-Null
 
 # Configurar variáveis de ambiente pro serviço
