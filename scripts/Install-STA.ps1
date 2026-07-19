@@ -139,9 +139,19 @@ Write-Host "  Estrutura criada em $InstallPath" -ForegroundColor Gray
 # --- 3. Verificar binários ---
 Write-Host "`n[2/8] Verificando binários..." -ForegroundColor Cyan
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sourceApi = Join-Path $scriptDir '..\publish\api'
-$sourceWorker = Join-Path $scriptDir '..\publish\worker'
-$sourceWeb = Join-Path $scriptDir '..\publish\web'
+$rootDir = Split-Path -Parent $scriptDir
+
+# Tenta encontrar binários (estrutura do zip da release)
+$sourceApi = Join-Path $rootDir 'api'
+$sourceWorker = Join-Path $rootDir 'worker'
+$sourceWeb = Join-Path $rootDir 'web'
+
+# Fallback: estrutura de build local (publish/)
+if (-not (Test-Path $sourceApi)) {
+    $sourceApi = Join-Path $rootDir 'publish\api'
+    $sourceWorker = Join-Path $rootDir 'publish\worker'
+    $sourceWeb = Join-Path $rootDir 'publish\web'
+}
 
 if (-not (Test-Path $sourceApi)) {
     Write-Host "  ERRO: Pasta publish/api nao encontrada." -ForegroundColor Red

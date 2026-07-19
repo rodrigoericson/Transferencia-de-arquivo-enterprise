@@ -38,7 +38,13 @@ Write-Host ""
 # --- Resolver paths ---
 if (-not $SourcePath) {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    $SourcePath = Join-Path $scriptDir '..\publish'
+    $rootDir = Split-Path -Parent $scriptDir
+    # Tenta estrutura do zip (api/ na raiz) ou build local (publish/api)
+    if (Test-Path (Join-Path $rootDir 'api')) {
+        $SourcePath = $rootDir
+    } else {
+        $SourcePath = Join-Path $rootDir 'publish'
+    }
 }
 
 if (-not (Test-Path "$SourcePath\api")) {
