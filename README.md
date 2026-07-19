@@ -99,23 +99,23 @@ DOCS.md                  # Documentação técnica completa
 
 ```text
 ┌─────────────────────────────────────────────┐
-│              Frontend (React)                │
+│              Frontend (React)               │
 │         Dashboard • CRUD • Logs • Audit     │
 └──────────────────────┬──────────────────────┘
                        │ HTTP/JWT
 ┌──────────────────────▼──────────────────────┐
-│              API REST (.NET 10)              │
+│              API REST (.NET 10)             │
 │  Auth • Etapas • Rotas • Destinos • Worker  │
-│  Logs • Auditoria • Diretórios • Health      │
+│  Logs • Auditoria • Diretórios • Health     │
 └──────────────────────┬──────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────┐
-│              Core (Services)                 │
+│              Core (Services)                │
 │  FileTransfer • Compress • Auth • Audit     │
 └──────────────────────┬──────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────┐
-│           Infrastructure                     │
+│           Infrastructure                    │
 │   PostgreSQL • File System • 7-Zip • LDAP   │
 └─────────────────────────────────────────────┘
 ```
