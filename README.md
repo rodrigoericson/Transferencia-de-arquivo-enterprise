@@ -153,7 +153,7 @@ DOCS.md                  # Documentação técnica completa
 
 ### Nível 2 — TAE-STA Connect (próximo)
 
-* 🚧 CI/CD pipeline + Docker
+* ✅ CI/CD pipeline (GitHub Actions + Release automático)
 * ⏳ SFTP como protocolo de destino (conexões agendáveis, pool por ciclo)
 * ⏳ Logs SFTP dedicados
 * ⏳ Scheduler por conexão (horários pontuais + dias da semana)
