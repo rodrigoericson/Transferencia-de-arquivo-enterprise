@@ -25,6 +25,8 @@ public class StaDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; } = null!;
     public DbSet<Auditoria> Auditorias { get; set; } = null!;
     public DbSet<ConexaoSftp> ConexoesSftp { get; set; } = null!;
+    public DbSet<LogSftp> LogsSftp { get; set; } = null!;
+    public DbSet<ExecucaoSftp> ExecucoesSftp { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +45,8 @@ public class StaDbContext : DbContext
         ConfigureUsuario(modelBuilder.Entity<Usuario>());
         ConfigureAuditoria(modelBuilder.Entity<Auditoria>());
         ConfigureConexaoSftp(modelBuilder.Entity<ConexaoSftp>());
+        ConfigureLogSftp(modelBuilder.Entity<LogSftp>());
+        ConfigureExecucaoSftp(modelBuilder.Entity<ExecucaoSftp>());
     }
 
     private static void ConfigureSistema(EntityTypeBuilder<Sistema> builder)
@@ -592,5 +596,104 @@ public class StaDbContext : DbContext
             .HasColumnName("dt_ultimo_uso");
 
         builder.HasIndex(c => c.NmConexao).IsUnique();
+    }
+
+    private static void ConfigureLogSftp(EntityTypeBuilder<LogSftp> builder)
+    {
+        builder.ToTable("tbl_log_sftp");
+
+        builder.HasKey(l => l.CnLogSftp);
+
+        builder.Property(l => l.CnLogSftp)
+            .HasColumnName("cn_log_sftp")
+            .ValueGeneratedOnAdd();
+
+        builder.Property(l => l.CnConexaoSftp)
+            .HasColumnName("cn_conexao_sftp")
+            .IsRequired();
+
+        builder.Property(l => l.CnRotaDestino)
+            .HasColumnName("cn_rota_destino");
+
+        builder.Property(l => l.IdTipo)
+            .HasColumnName("id_tipo")
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.Property(l => l.IdStatus)
+            .HasColumnName("id_status")
+            .HasMaxLength(1)
+            .IsRequired();
+
+        builder.Property(l => l.NmArquivo)
+            .HasColumnName("nm_arquivo")
+            .HasMaxLength(500);
+
+        builder.Property(l => l.NrTamanhoBytes)
+            .HasColumnName("nr_tamanho_bytes");
+
+        builder.Property(l => l.NrDuracaoMs)
+            .HasColumnName("nr_duracao_ms");
+
+        builder.Property(l => l.DsMensagem)
+            .HasColumnName("ds_mensagem")
+            .HasColumnType("text");
+
+        builder.Property(l => l.DtEvento)
+            .HasColumnName("dt_evento")
+            .HasDefaultValueSql("NOW()");
+
+        builder.HasOne(l => l.ConexaoSftp)
+            .WithMany()
+            .HasForeignKey(l => l.CnConexaoSftp)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(l => l.RotaDestino)
+            .WithMany()
+            .HasForeignKey(l => l.CnRotaDestino)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(l => new { l.CnConexaoSftp, l.DtEvento }).IsDescending(false, true);
+        builder.HasIndex(l => new { l.IdTipo, l.DtEvento }).IsDescending(false, true);
+    }
+
+    private static void ConfigureExecucaoSftp(EntityTypeBuilder<ExecucaoSftp> builder)
+    {
+        builder.ToTable("tbl_execucao_sftp");
+
+        builder.HasKey(e => e.CnExecucaoSftp);
+
+        builder.Property(e => e.CnExecucaoSftp)
+            .HasColumnName("cn_execucao_sftp")
+            .ValueGeneratedOnAdd();
+
+        builder.Property(e => e.CnConexaoSftp)
+            .HasColumnName("cn_conexao_sftp")
+            .IsRequired();
+
+        builder.Property(e => e.DtDia)
+            .HasColumnName("dt_dia")
+            .IsRequired();
+
+        builder.Property(e => e.HrHorario)
+            .HasColumnName("hr_horario")
+            .HasMaxLength(5)
+            .IsRequired();
+
+        builder.Property(e => e.IdResultado)
+            .HasColumnName("id_resultado")
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.Property(e => e.DtExecutadoEm)
+            .HasColumnName("dt_executado_em")
+            .HasDefaultValueSql("NOW()");
+
+        builder.HasOne(e => e.ConexaoSftp)
+            .WithMany()
+            .HasForeignKey(e => e.CnConexaoSftp)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.CnConexaoSftp, e.DtDia, e.HrHorario }).IsUnique();
     }
 }
