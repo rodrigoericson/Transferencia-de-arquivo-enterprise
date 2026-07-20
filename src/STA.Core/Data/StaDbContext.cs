@@ -318,6 +318,15 @@ public class StaDbContext : DbContext
             .HasColumnName("DsPadraoRename")
             .HasMaxLength(200);
 
+        builder.Property(d => d.IdProtocolo)
+            .HasColumnName("id_protocolo")
+            .HasMaxLength(10)
+            .HasDefaultValue("LOCAL")
+            .IsRequired();
+
+        builder.Property(d => d.CnConexaoSftp)
+            .HasColumnName("cn_conexao_sftp");
+
         builder.Property(d => d.FlAtivo)
             .HasColumnName("fl_ativo")
             .HasDefaultValue(true);
@@ -326,6 +335,11 @@ public class StaDbContext : DbContext
             .WithMany(r => r.Destinos)
             .HasForeignKey(d => d.CnRota)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(d => d.ConexaoSftp)
+            .WithMany()
+            .HasForeignKey(d => d.CnConexaoSftp)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 
     private static void ConfigureLogArquivo(EntityTypeBuilder<LogArquivo> builder)

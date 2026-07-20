@@ -14,8 +14,13 @@ public class RotaDestino
 
     public string? DsPadraoRename { get; set; }
 
+    public string IdProtocolo { get; set; } = "LOCAL";
+
+    public int? CnConexaoSftp { get; set; }
+
     public bool FlAtivo { get; set; } = true;
 
-    // Navigation property
+    // Navigation properties
     public RotaTransferencia? Rota { get; set; }
+    public ConexaoSftp? ConexaoSftp { get; set; }
 }
