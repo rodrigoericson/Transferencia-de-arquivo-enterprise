@@ -137,7 +137,7 @@ export default function LogsSftpPage() {
                         {l.idTipo}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-xs font-mono text-gray-300 truncate max-w-[150px]" title={l.nmArquivo || ''}>
+                    <td className="py-2 px-2 text-xs font-mono text-gray-300 truncate max-w-[200px] cursor-help" title={l.nmArquivo || ''}>
                       {l.nmArquivo || '-'}
                     </td>
                     <td className="py-2 px-2 text-xs text-gray-400">
@@ -146,7 +146,7 @@ export default function LogsSftpPage() {
                     <td className="py-2 px-2 text-xs text-gray-400">
                       {l.nrDuracaoMs != null ? `${l.nrDuracaoMs}ms` : '-'}
                     </td>
-                    <td className="py-2 px-2 text-xs text-gray-500 truncate max-w-[200px]" title={l.dsMensagem || ''}>
+                    <td className="py-2 px-2 text-xs text-gray-500 truncate max-w-[350px] cursor-help" title={l.dsMensagem || ''}>
                       {l.dsMensagem || '-'}
                     </td>
                   </tr>

@@ -89,6 +89,9 @@ public class ConexoesSftpController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.DsSenhaPlaintext) && string.IsNullOrWhiteSpace(dto.DsCaminhoChavePrivada))
             return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, "Informe a senha ou o caminho da chave privada."));
 
+        if (!string.IsNullOrWhiteSpace(dto.DsCaminhoChavePrivada) && !System.IO.File.Exists(dto.DsCaminhoChavePrivada))
+            return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, $"Arquivo de chave privada não encontrado: {dto.DsCaminhoChavePrivada}"));
+
         if (!ValidarHorarios(dto.DsHorariosExecucao, out var erroHorario))
             return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, erroHorario));
 
