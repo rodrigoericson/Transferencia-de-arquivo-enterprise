@@ -221,6 +221,62 @@ public class ConexoesSftpController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Operator")]
+    [HttpPost("{id:int}/testar")]
+    public async Task<ActionResult<ApiResponse<TestarConexaoResultDto>>> TestarConexaoExistente(int id, CancellationToken ct = default)
+    {
+        var conexao = await _context.ConexoesSftp.FindAsync([id], ct);
+        if (conexao is null)
+            return NotFound(new ApiResponse<TestarConexaoResultDto>(false, null, "Conexão não encontrada."));
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            using var client = _sftpFactory.Criar(conexao, _protector);
+            client.Connect();
+            var connected = client.IsConnected;
+            client.Disconnect();
+            sw.Stop();
+
+            var logRepo = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>();
+            if (connected)
+            {
+                await logRepo.InserirAsync(new STA.Core.Data.Entities.LogSftp
+                {
+                    CnConexaoSftp = conexao.CnConexaoSftp,
+                    IdTipo = "CONEXAO",
+                    IdStatus = "S",
+                    NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                    DsMensagem = $"Teste manual OK em {sw.ElapsedMilliseconds}ms — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})",
+                    DtEvento = DateTime.UtcNow
+                }, ct);
+
+                return Ok(new ApiResponse<TestarConexaoResultDto>(true,
+                    new TestarConexaoResultDto(true, $"Conectado em {sw.ElapsedMilliseconds}ms")));
+            }
+
+            return Ok(new ApiResponse<TestarConexaoResultDto>(true,
+                new TestarConexaoResultDto(false, "Não foi possível estabelecer conexão.")));
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            var logRepo = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>();
+            try { await logRepo.InserirAsync(new STA.Core.Data.Entities.LogSftp
+            {
+                CnConexaoSftp = conexao.CnConexaoSftp,
+                IdTipo = "CONEXAO",
+                IdStatus = "E",
+                NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                DsMensagem = $"Teste manual falhou: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})",
+                DtEvento = DateTime.UtcNow
+            }, ct); } catch { }
+
+            return Ok(new ApiResponse<TestarConexaoResultDto>(true,
+                new TestarConexaoResultDto(false, $"Falha: {ex.Message}")));
+        }
+    }
+
     private static bool ValidarHorarios(string dsHorarios, out string erro)
     {
         erro = string.Empty;
