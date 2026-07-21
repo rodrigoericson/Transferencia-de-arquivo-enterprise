@@ -9,6 +9,8 @@ public record DestinoDto(
     string DsDiretorioDestino,
     string? DsDescompactaDestino,
     string? DsPadraoRename,
+    string IdProtocolo,
+    int? CnConexaoSftp,
     bool FlAtivo);
 
 public record CreateDestinoDto(
@@ -16,11 +18,15 @@ public record CreateDestinoDto(
     [Range(1, 9999)] int NrOrdem = 1,
     [Required][StringLength(500)] string DsDiretorioDestino = "",
     [StringLength(10)] string? DsDescompactaDestino = null,
-    [StringLength(200)] string? DsPadraoRename = null);
+    [StringLength(200)] string? DsPadraoRename = null,
+    [StringLength(10)] string IdProtocolo = "LOCAL",
+    int? CnConexaoSftp = null);
 
 public record UpdateDestinoDto(
     [Range(1, 9999)] int NrOrdem,
     [Required][StringLength(500)] string DsDiretorioDestino,
     [StringLength(10)] string? DsDescompactaDestino = null,
     [StringLength(200)] string? DsPadraoRename = null,
+    [StringLength(10)] string IdProtocolo = "LOCAL",
+    int? CnConexaoSftp = null,
     bool FlAtivo = true);

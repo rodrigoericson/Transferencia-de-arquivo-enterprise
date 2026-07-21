@@ -6,6 +6,7 @@ namespace STA.Core.Services.Transports;
 public class SftpConnectionPool : IDisposable
 {
     private readonly Dictionary<int, ISftpClientWrapper> _pool = new();
+    private readonly object _poolLock = new();
     private readonly ISftpClientFactory _factory;
     private readonly ICredencialProtector _protector;
     private readonly ILogger<SftpConnectionPool> _logger;
@@ -22,43 +23,49 @@ public class SftpConnectionPool : IDisposable
 
     public ISftpClientWrapper GetOrCreate(ConexaoSftp conexao)
     {
-        if (_pool.TryGetValue(conexao.CnConexaoSftp, out var existing))
+        lock (_poolLock)
         {
-            if (existing.IsConnected)
-                return existing;
+            if (_pool.TryGetValue(conexao.CnConexaoSftp, out var existing))
+            {
+                if (existing.IsConnected)
+                    return existing;
 
-            _logger.LogWarning("Conexao SFTP '{Nome}' perdida. Reconectando...", conexao.NmConexao);
-            try { existing.Dispose(); } catch { }
-            _pool.Remove(conexao.CnConexaoSftp);
+                _logger.LogWarning("Conexao SFTP '{Nome}' perdida. Reconectando...", conexao.NmConexao);
+                try { existing.Dispose(); } catch { }
+                _pool.Remove(conexao.CnConexaoSftp);
+            }
+
+            var client = _factory.Criar(conexao, _protector);
+            client.Connect();
+            _pool[conexao.CnConexaoSftp] = client;
+
+            _logger.LogInformation("Conexao SFTP '{Nome}' ({Host}:{Porta}) aberta.",
+                conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
+
+            return client;
         }
-
-        var client = _factory.Criar(conexao, _protector);
-        client.Connect();
-        _pool[conexao.CnConexaoSftp] = client;
-
-        _logger.LogInformation("Conexao SFTP '{Nome}' ({Host}:{Porta}) aberta.",
-            conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
-
-        return client;
     }
 
     public void CloseAll()
     {
-        foreach (var (id, client) in _pool)
+        lock (_poolLock)
         {
-            try
+            foreach (var (id, client) in _pool)
             {
-                if (client.IsConnected)
-                    client.Disconnect();
-                client.Dispose();
+                try
+                {
+                    if (client.IsConnected)
+                        client.Disconnect();
+                    client.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Erro ao fechar conexao SFTP (id={Id}).", id);
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Erro ao fechar conexao SFTP (id={Id}).", id);
-            }
+            _pool.Clear();
+            _logger.LogDebug("Pool SFTP: todas as conexoes fechadas.");
         }
-        _pool.Clear();
-        _logger.LogDebug("Pool SFTP: todas as conexoes fechadas.");
     }
 
     public int ActiveConnections => _pool.Count;

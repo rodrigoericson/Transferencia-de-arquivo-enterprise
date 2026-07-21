@@ -48,6 +48,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddScoped<ILogRepository, LogRepository>();
         services.AddScoped<IEtapaRepository, EtapaRepository>();
         services.AddScoped<ILogArquivoRepository, LogArquivoRepository>();
+        services.AddScoped<ILogSftpRepository, LogSftpRepository>();
 
         // Services
         services.AddSingleton<IFileMaskMatcher, FileMaskMatcher>();

@@ -36,6 +36,7 @@ builder.Services.AddScoped<IParametroRepository, ParametroRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IEtapaRepository, EtapaRepository>();
 builder.Services.AddScoped<ILogArquivoRepository, LogArquivoRepository>();
+builder.Services.AddScoped<ILogSftpRepository, LogSftpRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();

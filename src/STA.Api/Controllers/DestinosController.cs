@@ -50,6 +50,7 @@ public class DestinosController : ControllerBase
                 d.NrOrdem,
                 d.DsDiretorioDestino,
                 d.DsDescompactaDestino, d.DsPadraoRename,
+                d.IdProtocolo, d.CnConexaoSftp,
                 d.FlAtivo))
             .ToListAsync(ct);
 
@@ -69,6 +70,7 @@ public class DestinosController : ControllerBase
                 d.NrOrdem,
                 d.DsDiretorioDestino,
                 d.DsDescompactaDestino, d.DsPadraoRename,
+                d.IdProtocolo, d.CnConexaoSftp,
                 d.FlAtivo))
             .FirstOrDefaultAsync(ct);
 
@@ -91,7 +93,10 @@ public class DestinosController : ControllerBase
             CnRota = dto.CnRota,
             NrOrdem = dto.NrOrdem,
             DsDiretorioDestino = dto.DsDiretorioDestino,
-            DsDescompactaDestino = dto.DsDescompactaDestino, DsPadraoRename = dto.DsPadraoRename,
+            DsDescompactaDestino = dto.DsDescompactaDestino,
+            DsPadraoRename = dto.DsPadraoRename,
+            IdProtocolo = dto.IdProtocolo,
+            CnConexaoSftp = dto.CnConexaoSftp,
             FlAtivo = true
         };
 
@@ -103,7 +108,8 @@ public class DestinosController : ControllerBase
 
         var result = new DestinoDto(
             destino.CnRotaDestino, destino.CnRota, destino.NrOrdem,
-            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename, destino.FlAtivo);
+            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename,
+            destino.IdProtocolo, destino.CnConexaoSftp, destino.FlAtivo);
 
         return CreatedAtAction(nameof(GetById), new { id = destino.CnRotaDestino }, new ApiResponse<DestinoDto>(true, result));
     }
@@ -118,7 +124,10 @@ public class DestinosController : ControllerBase
 
         destino.NrOrdem = dto.NrOrdem;
         destino.DsDiretorioDestino = dto.DsDiretorioDestino;
-        destino.DsDescompactaDestino = dto.DsDescompactaDestino; destino.DsPadraoRename = dto.DsPadraoRename;
+        destino.DsDescompactaDestino = dto.DsDescompactaDestino;
+        destino.DsPadraoRename = dto.DsPadraoRename;
+        destino.IdProtocolo = dto.IdProtocolo;
+        destino.CnConexaoSftp = dto.CnConexaoSftp;
         destino.FlAtivo = dto.FlAtivo;
 
         await _context.SaveChangesAsync(ct);
@@ -126,7 +135,8 @@ public class DestinosController : ControllerBase
 
         var result = new DestinoDto(
             destino.CnRotaDestino, destino.CnRota, destino.NrOrdem,
-            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename, destino.FlAtivo);
+            destino.DsDiretorioDestino, destino.DsDescompactaDestino, destino.DsPadraoRename,
+            destino.IdProtocolo, destino.CnConexaoSftp, destino.FlAtivo);
 
         return Ok(new ApiResponse<DestinoDto>(true, result));
     }

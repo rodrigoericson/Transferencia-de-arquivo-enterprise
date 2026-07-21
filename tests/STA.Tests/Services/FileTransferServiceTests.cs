@@ -42,6 +42,7 @@ public class FileTransferServiceTests : IDisposable
             compressorMock.Object,
             new FilePurgeService(new FileMaskMatcher(), Mock.Of<ILogger<FilePurgeService>>()),
             _logArquivoMock.Object,
+            Mock.Of<ILogSftpRepository>(),
             Mock.Of<ITransportFactory>(),
             Mock.Of<ILogger<FileTransferService>>());
     }

@@ -3,6 +3,7 @@ using STA.Core.Data.Entities;
 using STA.Core.Data.Repositories;
 using STA.Core.Models;
 using STA.Core.Services.Transports;
+using System.Diagnostics;
 
 namespace STA.Core.Services;
 
@@ -34,6 +35,7 @@ public class FileTransferService : IFileTransferService
     private readonly IFileCompressor _compressor;
     private readonly IFilePurgeService _purgeService;
     private readonly ILogArquivoRepository _logArquivoRepository;
+    private readonly ILogSftpRepository _logSftpRepository;
     private readonly ITransportFactory _transportFactory;
     private readonly ILogger<FileTransferService> _logger;
     private SftpConnectionPool? _sftpPool;
@@ -45,6 +47,7 @@ public class FileTransferService : IFileTransferService
         IFileCompressor compressor,
         IFilePurgeService purgeService,
         ILogArquivoRepository logArquivoRepository,
+        ILogSftpRepository logSftpRepository,
         ITransportFactory transportFactory,
         ILogger<FileTransferService> logger)
     {
@@ -54,6 +57,7 @@ public class FileTransferService : IFileTransferService
         _compressor = compressor;
         _purgeService = purgeService;
         _logArquivoRepository = logArquivoRepository;
+        _logSftpRepository = logSftpRepository;
         _transportFactory = transportFactory;
         _logger = logger;
     }
@@ -143,7 +147,22 @@ public class FileTransferService : IFileTransferService
                                 client = new SftpClientFactory().Criar(dest.Conexao, new DpapiCredencialProtector());
 
                             var transport = new SftpTransport(client, _logger as ILogger<SftpTransport> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<SftpTransport>.Instance);
+                            var sw = Stopwatch.StartNew();
                             await transport.UploadFileAsync(filePath, remotePath, overwriteExisting, cancellationToken);
+                            sw.Stop();
+
+                            try { await _logSftpRepository.InserirAsync(new LogSftp
+                            {
+                                CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                                CnRotaDestino = dest.Destino.CnRotaDestino,
+                                IdTipo = "UPLOAD",
+                                IdStatus = "S",
+                                NmArquivo = destFileName,
+                                NrTamanhoBytes = file.Length,
+                                NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                                DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
+                                DtEvento = DateTime.UtcNow
+                            }, cancellationToken); } catch { }
                         }
                         else
                         {
@@ -157,6 +176,20 @@ public class FileTransferService : IFileTransferService
                         _logger.LogError(ex, "Falha ao copiar '{File}' para '{Dest}'.", fileName, dest.Diretorio);
                         errors.Add($"{file.Name} → {dest.Diretorio}: {ex.Message}");
                         destResults.Add((dest.Diretorio, false, ex.Message));
+
+                        if (dest.Destino?.IdProtocolo == "SFTP" && dest.Conexao != null)
+                        {
+                            try { await _logSftpRepository.InserirAsync(new LogSftp
+                            {
+                                CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                                CnRotaDestino = dest.Destino.CnRotaDestino,
+                                IdTipo = "ERRO",
+                                IdStatus = "E",
+                                NmArquivo = file.Name,
+                                DsMensagem = ex.Message,
+                                DtEvento = DateTime.UtcNow
+                            }, cancellationToken); } catch { }
+                        }
                         fanOutOk = false;
                     }
                 }
