@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using STA.Core.Data;
 using STA.Core.Data.Repositories;
 using STA.Core.Services;
+using STA.Core.Services.Transports;
 using STA.Core.Settings;
 
 
@@ -40,6 +41,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddSingleton<ICredencialProtector, DpapiCredencialProtector>();
+builder.Services.AddSingleton<ISftpClientFactory, SftpClientFactory>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]
