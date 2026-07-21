@@ -31,7 +31,16 @@ public class SftpTransport : IDestinationTransport
         }
         catch
         {
-            try { if (_client.Exists(tmpPath)) _client.DeleteFile(tmpPath); } catch { }
+            try
+            {
+                if (_client.Exists(tmpPath))
+                    _client.DeleteFile(tmpPath);
+            }
+            catch (Exception cleanupEx)
+            {
+                _logger.LogWarning(cleanupEx,
+                    "Falha ao limpar arquivo temporario SFTP: {Path}", tmpPath);
+            }
             throw;
         }
     }
