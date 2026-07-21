@@ -9,6 +9,8 @@ import Logs from './pages/Logs';
 import NovaTransferencia from './pages/NovaTransferencia';
 import EditarTransferencia from './pages/EditarTransferencia';
 import Auditoria from './pages/Auditoria';
+import ConexoesSftp from './pages/ConexoesSftp';
+import LogsSftp from './pages/LogsSftp';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/rotas/:rotaId/destinos" element={<ProtectedRoute><Destinos /></ProtectedRoute>} />
         <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
         <Route path="/auditoria" element={<ProtectedRoute><Auditoria /></ProtectedRoute>} />
+        <Route path="/conexoes-sftp" element={<ProtectedRoute><ConexoesSftp /></ProtectedRoute>} />
+        <Route path="/logs-sftp" element={<ProtectedRoute><LogsSftp /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

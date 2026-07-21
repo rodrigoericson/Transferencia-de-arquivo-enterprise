@@ -55,3 +55,16 @@ public record TestarConexaoSftpDto(
 );
 
 public record TestarConexaoResultDto(bool Sucesso, string Mensagem);
+
+public record LogSftpDto(
+    int CnLogSftp,
+    int CnConexaoSftp,
+    int? CnRotaDestino,
+    string IdTipo,
+    string IdStatus,
+    string? NmArquivo,
+    long? NrTamanhoBytes,
+    int? NrDuracaoMs,
+    string? DsMensagem,
+    DateTime DtEvento
+);

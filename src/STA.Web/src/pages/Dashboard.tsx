@@ -143,6 +143,10 @@ export default function Dashboard() {
           )}
           <NavCard title="Transferências" description="Ver etapas, rotas e destinos" onClick={() => navigate('/etapas')} />
           <NavCard title="Logs" description="Ver registros de transferência de hoje" onClick={() => navigate('/logs')} />
+          {sessionStorage.getItem('sta_role') !== 'Viewer' && (
+            <NavCard title="Conexões SFTP" description="Gerenciar conexões SFTP externas" onClick={() => navigate('/conexoes-sftp')} />
+          )}
+          <NavCard title="Logs SFTP" description="Registros de transferência SFTP" onClick={() => navigate('/logs-sftp')} />
           {sessionStorage.getItem('sta_role') === 'Admin' && (
             <NavCard title="Auditoria" description="Ver histórico de ações no sistema" onClick={() => navigate('/auditoria')} />
           )}

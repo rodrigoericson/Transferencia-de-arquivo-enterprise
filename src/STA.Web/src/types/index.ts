@@ -106,6 +106,36 @@ export interface Execucao {
   duracaoUltimoCicloMs: number | null;
 }
 
+export interface ConexaoSftp {
+  cnConexaoSftp: number;
+  nmConexao: string;
+  dsHost: string;
+  nrPorta: number;
+  dsUsuario: string;
+  flPossuiSenha: boolean;
+  dsCaminhoChavePrivada: string | null;
+  dsHorariosExecucao: string;
+  dsDiasSemana: string;
+  flArquivoObrigatorio: boolean;
+  nrToleranciaMinutos: number;
+  flAtivo: boolean;
+  dtCriacao: string;
+  dtUltimoUso: string | null;
+}
+
+export interface LogSftp {
+  cnLogSftp: number;
+  cnConexaoSftp: number;
+  cnRotaDestino: number | null;
+  idTipo: string;
+  idStatus: string;
+  nmArquivo: string | null;
+  nrTamanhoBytes: number | null;
+  nrDuracaoMs: number | null;
+  dsMensagem: string | null;
+  dtEvento: string;
+}
+
 export interface Auditoria {
   cnAuditoria: number;
   cnUsuario: number | null;
