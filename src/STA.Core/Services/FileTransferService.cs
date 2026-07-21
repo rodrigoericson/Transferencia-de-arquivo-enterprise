@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using STA.Core.Data.Entities;
 using STA.Core.Data.Repositories;
 using STA.Core.Models;
+using STA.Core.Services.Transports;
 
 namespace STA.Core.Services;
 
@@ -11,7 +12,7 @@ public record FileTransferResult(
     int FilesFailed,
     List<string> ErrorMessages);
 
-public record DestinoTransfer(string Diretorio, string? PadraoRename);
+public record DestinoTransfer(string Diretorio, string? PadraoRename, RotaDestino? Destino = null, ConexaoSftp? Conexao = null);
 
 public interface IFileTransferService
 {
@@ -33,6 +34,7 @@ public class FileTransferService : IFileTransferService
     private readonly IFileCompressor _compressor;
     private readonly IFilePurgeService _purgeService;
     private readonly ILogArquivoRepository _logArquivoRepository;
+    private readonly ITransportFactory _transportFactory;
     private readonly ILogger<FileTransferService> _logger;
 
     public FileTransferService(
@@ -42,6 +44,7 @@ public class FileTransferService : IFileTransferService
         IFileCompressor compressor,
         IFilePurgeService purgeService,
         ILogArquivoRepository logArquivoRepository,
+        ITransportFactory transportFactory,
         ILogger<FileTransferService> logger)
     {
         _maskMatcher = maskMatcher;
@@ -50,6 +53,7 @@ public class FileTransferService : IFileTransferService
         _compressor = compressor;
         _purgeService = purgeService;
         _logArquivoRepository = logArquivoRepository;
+        _transportFactory = transportFactory;
         _logger = logger;
     }
 
@@ -125,7 +129,18 @@ public class FileTransferService : IFileTransferService
                     try
                     {
                         var destFileName = AplicarRename(fileName, dest.PadraoRename);
-                        CopyToDestination(filePath, destFileName, dest.Diretorio, overwriteExisting);
+                        var remotePath = Path.Combine(dest.Diretorio, destFileName);
+
+                        if (dest.Destino != null)
+                        {
+                            var transport = _transportFactory.Criar(dest.Destino, dest.Conexao);
+                            await transport.UploadFileAsync(filePath, remotePath, overwriteExisting, cancellationToken);
+                        }
+                        else
+                        {
+                            CopyToDestination(filePath, destFileName, dest.Diretorio, overwriteExisting);
+                        }
+
                         destResults.Add((dest.Diretorio, true, null));
                     }
                     catch (Exception ex)

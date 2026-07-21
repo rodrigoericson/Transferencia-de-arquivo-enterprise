@@ -4,6 +4,7 @@ using STA.Core.Data.Entities;
 using STA.Core.Data.Repositories;
 using STA.Core.Models;
 using STA.Core.Services;
+using STA.Core.Services.Transports;
 using Xunit;
 
 namespace STA.Tests.Services;
@@ -41,6 +42,7 @@ public class FileTransferServiceTests : IDisposable
             compressorMock.Object,
             new FilePurgeService(new FileMaskMatcher(), Mock.Of<ILogger<FilePurgeService>>()),
             _logArquivoMock.Object,
+            Mock.Of<ITransportFactory>(),
             Mock.Of<ILogger<FileTransferService>>());
     }
 
