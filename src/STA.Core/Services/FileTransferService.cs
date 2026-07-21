@@ -36,6 +36,7 @@ public class FileTransferService : IFileTransferService
     private readonly ILogArquivoRepository _logArquivoRepository;
     private readonly ITransportFactory _transportFactory;
     private readonly ILogger<FileTransferService> _logger;
+    private SftpConnectionPool? _sftpPool;
 
     public FileTransferService(
         IFileMaskMatcher maskMatcher,
@@ -56,6 +57,8 @@ public class FileTransferService : IFileTransferService
         _transportFactory = transportFactory;
         _logger = logger;
     }
+
+    public void SetSftpPool(SftpConnectionPool? pool) => _sftpPool = pool;
 
     public async Task<FileTransferResult> TransferFanOutAsync(
         TransferPath config,
@@ -131,9 +134,15 @@ public class FileTransferService : IFileTransferService
                         var destFileName = AplicarRename(fileName, dest.PadraoRename);
                         var remotePath = Path.Combine(dest.Diretorio, destFileName);
 
-                        if (dest.Destino != null)
+                        if (dest.Destino != null && dest.Destino.IdProtocolo == "SFTP" && dest.Conexao != null)
                         {
-                            var transport = _transportFactory.Criar(dest.Destino, dest.Conexao);
+                            ISftpClientWrapper client;
+                            if (_sftpPool != null)
+                                client = _sftpPool.GetOrCreate(dest.Conexao);
+                            else
+                                client = new SftpClientFactory().Criar(dest.Conexao, new DpapiCredencialProtector());
+
+                            var transport = new SftpTransport(client, _logger as ILogger<SftpTransport> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<SftpTransport>.Instance);
                             await transport.UploadFileAsync(filePath, remotePath, overwriteExisting, cancellationToken);
                         }
                         else

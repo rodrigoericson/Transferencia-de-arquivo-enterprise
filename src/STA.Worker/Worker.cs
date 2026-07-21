@@ -394,12 +394,18 @@ public class Worker : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<STA.Core.Data.StaDbContext>();
-            var destinos = await context.RotaDestinos
+            var rotaDestinos = await context.RotaDestinos
+                .Include(d => d.ConexaoSftp)
                 .Where(d => d.CnRota == cnRota.Value && d.FlAtivo)
                 .OrderBy(d => d.NrOrdem)
-                .Select(d => new STA.Core.Services.DestinoTransfer(d.DsDiretorioDestino, d.DsPadraoRename))
                 .ToListAsync(stoppingToken);
-            return destinos;
+
+            return rotaDestinos.Select(d => new STA.Core.Services.DestinoTransfer(
+                d.DsDiretorioDestino,
+                d.DsPadraoRename,
+                d,
+                d.ConexaoSftp
+            )).ToList();
         }
         catch
         {

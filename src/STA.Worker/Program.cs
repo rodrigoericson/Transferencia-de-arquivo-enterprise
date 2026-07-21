@@ -4,6 +4,7 @@ using STA.Worker;
 using STA.Core.Data;
 using STA.Core.Data.Repositories;
 using STA.Core.Services;
+using STA.Core.Services.Transports;
 using STA.Core.Settings;
 
 var builder = Host.CreateDefaultBuilder(args)
@@ -63,6 +64,14 @@ var builder = Host.CreateDefaultBuilder(args)
             var logger = sp.GetRequiredService<ILogger<FileCompressor>>();
             return new FileCompressor(settings.Arquivo7Zip, logger);
         });
+
+        // Transports SFTP
+        services.AddSingleton<ICredencialProtector, DpapiCredencialProtector>();
+        services.AddSingleton<ISftpClientFactory, SftpClientFactory>();
+        services.AddSingleton<ITransportFactory>(sp => new TransportFactory(
+            sp.GetRequiredService<ISftpClientFactory>(),
+            sp.GetRequiredService<ICredencialProtector>(),
+            sp.GetRequiredService<ILoggerFactory>()));
 
         // Estado de execução (compartilhado entre Worker e API)
         services.AddSingleton<EstadoExecucao>();
