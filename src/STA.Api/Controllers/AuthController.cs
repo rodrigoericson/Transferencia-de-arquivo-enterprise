@@ -20,12 +20,14 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _config;
     private readonly IAuthService _authService;
     private readonly IAuditService _audit;
+    private readonly STA.Core.Data.StaDbContext _context;
 
-    public AuthController(IConfiguration config, IAuthService authService, IAuditService audit)
+    public AuthController(IConfiguration config, IAuthService authService, IAuditService audit, STA.Core.Data.StaDbContext context)
     {
         _config = config;
         _authService = authService;
         _audit = audit;
+        _context = context;
     }
 
     [EnableRateLimiting("login")]
@@ -104,15 +106,13 @@ public class AuthController : ControllerBase
 
     private async Task<STA.Core.Data.Entities.Usuario?> GetUsuarioAsync(string username, CancellationToken ct)
     {
-        var context = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.StaDbContext>();
-        return await context.Usuarios.FirstOrDefaultAsync(
+        return await _context.Usuarios.FirstOrDefaultAsync(
             u => u.NmUsuario == username, ct);
     }
 
     private async Task SaveAsync(CancellationToken ct)
     {
-        var context = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.StaDbContext>();
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
     }
 }
 

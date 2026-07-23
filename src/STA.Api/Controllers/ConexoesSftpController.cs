@@ -5,6 +5,7 @@ using STA.Api.Common;
 using STA.Api.Dtos;
 using STA.Core.Data;
 using STA.Core.Data.Entities;
+using STA.Core.Data.Repositories;
 using STA.Core.Services;
 using STA.Core.Services.Transports;
 
@@ -19,17 +20,20 @@ public class ConexoesSftpController : ControllerBase
     private readonly StaDbContext _context;
     private readonly ICredencialProtector _protector;
     private readonly ISftpClientFactory _sftpFactory;
+    private readonly ILogSftpRepository _logSftpRepository;
     private readonly IAuditService _audit;
 
     public ConexoesSftpController(
         StaDbContext context,
         ICredencialProtector protector,
         ISftpClientFactory sftpFactory,
+        ILogSftpRepository logSftpRepository,
         IAuditService audit)
     {
         _context = context;
         _protector = protector;
         _sftpFactory = sftpFactory;
+        _logSftpRepository = logSftpRepository;
         _audit = audit;
     }
 
@@ -244,7 +248,7 @@ public class ConexoesSftpController : ControllerBase
             client.Disconnect();
             sw.Stop();
 
-            var logRepo = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>();
+            var logRepo = _logSftpRepository;
             if (connected)
             {
                 await logRepo.InserirAsync(new STA.Core.Data.Entities.LogSftp
