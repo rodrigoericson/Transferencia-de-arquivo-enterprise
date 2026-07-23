@@ -35,7 +35,7 @@ public class DiretoriosController : ControllerBase
         }
         catch (Exception ex)
         {
-            return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", $"Erro: {ex.Message}", false)));
+            return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", "Erro ao processar diretório.", false)));
         }
     }
 
@@ -61,7 +61,7 @@ public class DiretoriosController : ControllerBase
         }
         catch (Exception ex)
         {
-            return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", $"Erro: {ex.Message}", false)));
+            return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", "Erro ao processar diretório.", false)));
         }
     }
 }

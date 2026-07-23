@@ -96,12 +96,12 @@ public class AuthService : IAuthService
         catch (LdapException ex)
         {
             _logger.LogDebug(ex, "Falha LDAP para '{User}': {Message}", username, ex.Message);
-            return new AuthResult(false, null, null, null, $"LDAP: {ex.Message}");
+            return new AuthResult(false, null, null, null, "Credenciais inválidas.");
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Erro inesperado na autenticação LDAP para '{User}'.", username);
-            return new AuthResult(false, null, null, null, $"Erro LDAP: {ex.Message}");
+            return new AuthResult(false, null, null, null, "Credenciais inválidas.");
         }
     }
 

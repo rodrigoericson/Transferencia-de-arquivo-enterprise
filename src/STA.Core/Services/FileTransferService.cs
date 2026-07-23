@@ -95,7 +95,7 @@ public class FileTransferService : IFileTransferService
         if (destinos.Count == 0)
         {
             _logger.LogWarning("Rota sem destinos ativos. Nenhum arquivo será processado (origem preservada).");
-            return new FileTransferResult(0, 0, 0, ["Rota sem destinos ativos."]);
+            return new FileTransferResult(0, 0, 1, ["Rota sem destinos ativos — configuração incorreta."]);
         }
 
         var errors = new List<string>();
@@ -150,7 +150,8 @@ public class FileTransferService : IFileTransferService
                             _logger.LogWarning("Rename pattern gerou nome inseguro: '{Name}'. Usando nome original.", destFileName);
                             destFileName = fileName;
                         }
-                        var destKey = $"{dest.Diretorio}|{destFileName}";
+                        var destIdentity = dest.Destino?.IdProtocolo == "SFTP" ? $"SFTP:{dest.Destino?.CnRotaDestino}" : $"LOCAL:{dest.Diretorio}";
+                        var destKey = $"{destIdentity}|{destFileName}";
                         if (!resolvedNames.Add(destKey))
                         {
                             _logger.LogWarning("Colisão de nome no destino: '{Dir}/{Name}'. Arquivo ignorado para este destino.", dest.Diretorio, destFileName);

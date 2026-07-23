@@ -95,7 +95,7 @@ public class ConexoesSftpController : ControllerBase
             return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, "Informe a senha ou o caminho da chave privada."));
 
         if (!string.IsNullOrWhiteSpace(dto.DsCaminhoChavePrivada) && !System.IO.File.Exists(dto.DsCaminhoChavePrivada))
-            return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, $"Arquivo de chave privada não encontrado: {dto.DsCaminhoChavePrivada}"));
+            return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, "Arquivo de chave privada não encontrado ou inacessível."));
 
         if (!ValidarHorarios(dto.DsHorariosExecucao, out var erroHorario))
             return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, erroHorario));
@@ -144,7 +144,7 @@ public class ConexoesSftpController : ControllerBase
             return NotFound(new ApiResponse<ConexaoSftpDto>(false, null, "Conexão SFTP não encontrada."));
 
         if (!string.IsNullOrWhiteSpace(dto.DsCaminhoChavePrivada) && !System.IO.File.Exists(dto.DsCaminhoChavePrivada))
-            return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, $"Arquivo de chave privada não encontrado: {dto.DsCaminhoChavePrivada}"));
+            return BadRequest(new ApiResponse<ConexaoSftpDto>(false, null, "Arquivo de chave privada não encontrado ou inacessível."));
 
         conexao.NmConexao = dto.NmConexao;
         conexao.DsHost = dto.DsHost;
@@ -272,14 +272,13 @@ public class ConexoesSftpController : ControllerBase
         catch (Exception ex)
         {
             sw.Stop();
-            var logRepo = HttpContext.RequestServices.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>();
-            try { await logRepo.InserirAsync(new STA.Core.Data.Entities.LogSftp
+            try { await _logSftpRepository.InserirAsync(new STA.Core.Data.Entities.LogSftp
             {
                 CnConexaoSftp = conexao.CnConexaoSftp,
                 IdTipo = "CONEXAO",
                 IdStatus = "E",
                 NrDuracaoMs = (int)sw.ElapsedMilliseconds,
-                DsMensagem = $"Teste manual falhou: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})",
+                DsMensagem = "Falha ao testar conexão SFTP",
                 DtEvento = DateTime.UtcNow
             }, ct); } catch { }
 
