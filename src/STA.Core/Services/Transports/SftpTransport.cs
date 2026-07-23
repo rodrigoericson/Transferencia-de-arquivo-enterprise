@@ -19,18 +19,37 @@ public class SftpTransport : IDestinationTransport
         EnsureConnected();
 
         var tmpPath = remotePath + ".tmp";
+        var backupPath = remotePath + ".bak";
 
         try
         {
             await UploadWithRetryAsync(sourceFilePath, tmpPath, ct);
 
             if (overwrite && _client.Exists(remotePath))
-                _client.DeleteFile(remotePath);
+            {
+                if (_client.Exists(backupPath))
+                    _client.DeleteFile(backupPath);
+                _client.RenameFile(remotePath, backupPath);
+            }
 
             _client.RenameFile(tmpPath, remotePath);
+
+            if (_client.Exists(backupPath))
+                _client.DeleteFile(backupPath);
         }
         catch
         {
+            try
+            {
+                if (_client.Exists(backupPath) && !_client.Exists(remotePath))
+                    _client.RenameFile(backupPath, remotePath);
+            }
+            catch (Exception restoreEx)
+            {
+                _logger.LogWarning(restoreEx,
+                    "Falha ao restaurar arquivo remoto de backup: {Path}", backupPath);
+            }
+
             try
             {
                 if (_client.Exists(tmpPath))
@@ -86,8 +105,22 @@ public class SftpTransport : IDestinationTransport
         }
     }
 
+    public Task<IReadOnlyList<SftpRemoteEntry>> BrowseDirectoryAsync(string remoteDirectory, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        var entries = _client.ListDirectoryDetailed(remoteDirectory)
+            .OrderByDescending(e => e.IsDirectory)
+            .ThenBy(e => e.Name)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<SftpRemoteEntry>>(entries);
+    }
+
     private async Task UploadWithRetryAsync(string sourceFilePath, string remotePath, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         try
         {
             DoUpload(sourceFilePath, remotePath);
@@ -96,6 +129,7 @@ public class SftpTransport : IDestinationTransport
         {
             _logger.LogWarning(ex, "Upload SFTP falhou, tentando retry em {Delay}ms...", RetryDelayMs);
             await Task.Delay(RetryDelayMs, ct);
+            ct.ThrowIfCancellationRequested();
             DoUpload(sourceFilePath, remotePath);
         }
     }

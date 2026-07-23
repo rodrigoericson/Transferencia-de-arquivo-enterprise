@@ -9,7 +9,7 @@ public record ConexaoSftpDto(
     int NrPorta,
     string DsUsuario,
     bool FlPossuiSenha,
-    string? DsCaminhoChavePrivada,
+    bool FlPossuiChavePrivada,
     string DsHorariosExecucao,
     string DsDiasSemana,
     bool FlArquivoObrigatorio,
@@ -55,6 +55,24 @@ public record TestarConexaoSftpDto(
 );
 
 public record TestarConexaoResultDto(bool Sucesso, string Mensagem);
+
+public record SftpRemoteEntryDto(
+    string Name,
+    string FullPath,
+    bool IsDirectory,
+    long SizeBytes,
+    DateTime LastModifiedUtc
+);
+
+public record BrowseSftpResultDto(
+    string CurrentPath,
+    IReadOnlyList<SftpRemoteEntryDto> Entries
+);
+
+public record ValidarDiretorioSftpResultDto(
+    bool Exists,
+    string Mensagem
+);
 
 public record LogSftpDto(
     int CnLogSftp,

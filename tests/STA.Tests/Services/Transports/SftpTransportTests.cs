@@ -34,17 +34,21 @@ public class SftpTransportTests
     }
 
     [Fact]
-    public async Task UploadFileAsync_Overwrite_DeletaAntigoAntesDeRename()
+    public async Task UploadFileAsync_Overwrite_UsaBackupSwapSeguro()
     {
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, "novo");
 
         _clientMock.Setup(c => c.Exists("/remote/file.txt")).Returns(true);
+        _clientMock.SetupSequence(c => c.Exists("/remote/file.txt.bak"))
+            .Returns(false)
+            .Returns(true);
 
         await _transport.UploadFileAsync(tempFile, "/remote/file.txt", true);
 
-        _clientMock.Verify(c => c.DeleteFile("/remote/file.txt"), Times.Once);
+        _clientMock.Verify(c => c.RenameFile("/remote/file.txt", "/remote/file.txt.bak"), Times.Once);
         _clientMock.Verify(c => c.RenameFile("/remote/file.txt.tmp", "/remote/file.txt"), Times.Once);
+        _clientMock.Verify(c => c.DeleteFile("/remote/file.txt.bak"), Times.Once);
 
         File.Delete(tempFile);
     }
@@ -98,6 +102,26 @@ public class SftpTransportTests
 
         Assert.Equal(2, files.Count);
         Assert.Contains("file1.txt", files);
+    }
+
+    [Fact]
+    public async Task BrowseDirectoryAsync_RetornaEntriesOrdenadasComDiretoriosPrimeiro()
+    {
+        var modified = DateTime.UtcNow;
+        _clientMock.Setup(c => c.ListDirectoryDetailed("/remote"))
+            .Returns(new[]
+            {
+                new SftpRemoteEntry("arquivo.txt", "/remote/arquivo.txt", false, 123, modified),
+                new SftpRemoteEntry("entrada", "/remote/entrada", true, 0, modified)
+            });
+
+        var entries = await _transport.BrowseDirectoryAsync("/remote");
+
+        Assert.Equal(2, entries.Count);
+        Assert.True(entries[0].IsDirectory);
+        Assert.Equal("entrada", entries[0].Name);
+        Assert.Equal("arquivo.txt", entries[1].Name);
+        Assert.Equal(123, entries[1].SizeBytes);
     }
 
     [Fact]

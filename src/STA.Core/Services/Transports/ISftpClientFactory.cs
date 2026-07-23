@@ -11,7 +11,9 @@ public interface ISftpClientWrapper : IDisposable
     void RenameFile(string oldPath, string newPath);
     void DeleteFile(string path);
     bool Exists(string path);
+    bool DirectoryExists(string path);
     IEnumerable<string> ListDirectory(string path);
+    IEnumerable<SftpRemoteEntry> ListDirectoryDetailed(string path);
 }
 
 public interface ISftpClientFactory

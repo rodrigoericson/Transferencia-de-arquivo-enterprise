@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
-import type { ApiResponse, PaginatedResponse, ConexaoSftp } from '../types';
+import type { ApiResponse, PaginatedResponse, ConexaoSftp, BrowseSftpResult, SftpRemoteEntry } from '../types';
 import Header from '../components/layout/Header';
 
 const DIAS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
@@ -11,6 +11,7 @@ export default function ConexoesSftpPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ConexaoSftp | null>(null);
+  const [browsing, setBrowsing] = useState<ConexaoSftp | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => { fetchConexoes(); }, []);
@@ -115,10 +116,11 @@ export default function ConexoesSftpPage() {
                       {c.flArquivoObrigatorio && <span className="text-yellow-400">⚠ Arquivo obrigatório</span>}
                     </div>
                     {c.flPossuiSenha && <p className="text-xs text-gray-600 mt-1">🔒 Senha configurada</p>}
-                    {c.dsCaminhoChavePrivada && <p className="text-xs text-gray-600 mt-1">🔑 Chave: {c.dsCaminhoChavePrivada}</p>}
+                    {c.flPossuiChavePrivada && <p className="text-xs text-gray-600 mt-1">🔑 Chave privada configurada</p>}
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <button onClick={() => handleTestar(c)} className="px-2 py-1 text-xs bg-blue-900 text-blue-300 hover:bg-blue-800 rounded">↻ Testar</button>
+                    <button onClick={() => setBrowsing(c)} className="px-2 py-1 text-xs bg-purple-900 text-purple-300 hover:bg-purple-800 rounded">Explorar</button>
                     <button onClick={() => { setEditing(c); setShowForm(true); }} className="px-2 py-1 text-xs bg-gray-700 text-gray-300 hover:bg-gray-600 rounded">Editar</button>
                     <button onClick={() => handleDelete(c.cnConexaoSftp, c.nmConexao)} className="px-2 py-1 text-xs bg-red-900 text-red-300 hover:bg-red-800 rounded">Excluir</button>
                     <button onClick={() => handleToggleAtivo(c)}
@@ -137,6 +139,13 @@ export default function ConexoesSftpPage() {
             initial={editing}
             onSave={handleSave}
             onCancel={() => { setShowForm(false); setEditing(null); }}
+          />
+        )}
+
+        {browsing && (
+          <SftpBrowserModal
+            conexao={browsing}
+            onCancel={() => setBrowsing(null)}
           />
         )}
       </div>
@@ -158,6 +167,133 @@ interface ConexaoSftpForm {
   flAtivo: boolean;
 }
 
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function getParentPath(path: string) {
+  const normalized = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
+  const index = normalized.lastIndexOf('/');
+  if (index <= 0) return '/';
+  return normalized.slice(0, index);
+}
+
+function SftpBrowserModal({ conexao, onCancel }: {
+  conexao: ConexaoSftp;
+  onCancel: () => void;
+}) {
+  const [path, setPath] = useState('/');
+  const [inputPath, setInputPath] = useState('/');
+  const [entries, setEntries] = useState<SftpRemoteEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const browse = async (targetPath: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.get<ApiResponse<BrowseSftpResult>>(
+        `/conexoes-sftp/${conexao.cnConexaoSftp}/browse?path=${encodeURIComponent(targetPath)}`
+      );
+
+      if (data.success && data.data) {
+        setPath(data.data.currentPath);
+        setInputPath(data.data.currentPath);
+        setEntries(data.data.entries);
+      } else {
+        setEntries([]);
+        setError(data.message || 'Não foi possível listar o diretório remoto.');
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erro ao listar diretório remoto.';
+      setEntries([]);
+      setError(msg);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { browse('/'); }, [conexao.cnConexaoSftp]);
+
+  const openEntry = (entry: SftpRemoteEntry) => {
+    if (!entry.isDirectory) return;
+    browse(entry.fullPath);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 overflow-auto py-8">
+      <div className="bg-gray-900 border border-gray-700 rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col">
+        <div className="p-5 border-b border-gray-800 flex justify-between items-start gap-4">
+          <div>
+            <h2 className="text-lg text-green-400 font-mono">Explorar SFTP</h2>
+            <p className="text-sm text-gray-500 mt-1">{conexao.nmConexao} • {conexao.dsHost}:{conexao.nrPorta}</p>
+          </div>
+          <button onClick={onCancel} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Fechar</button>
+        </div>
+
+        <div className="p-5 border-b border-gray-800 space-y-3">
+          <label className="block text-xs text-gray-400">Caminho remoto</label>
+          <div className="flex gap-2">
+            <input value={inputPath} onChange={(e) => setInputPath(e.target.value)}
+              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
+            <button onClick={() => browse(inputPath)} disabled={loading}
+              className="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 disabled:opacity-60 rounded">Ir</button>
+            <button onClick={() => browse(getParentPath(path))} disabled={loading || path === '/'}
+              className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-40 rounded">Subir</button>
+            <button onClick={() => browse(path)} disabled={loading}
+              className="px-3 py-2 text-sm bg-blue-900 text-blue-300 hover:bg-blue-800 disabled:opacity-60 rounded">Atualizar</button>
+          </div>
+          <p className="text-xs text-gray-500 font-mono">Atual: {path}</p>
+          {error && <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded px-3 py-2">{error}</p>}
+        </div>
+
+        <div className="overflow-auto flex-1">
+          {loading ? (
+            <p className="text-gray-500 py-8 text-center">Carregando diretório remoto...</p>
+          ) : entries.length === 0 ? (
+            <p className="text-gray-500 py-8 text-center">Nenhum arquivo ou pasta encontrado.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-950 text-gray-500 sticky top-0">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Nome</th>
+                  <th className="text-left px-4 py-3 font-medium">Tipo</th>
+                  <th className="text-right px-4 py-3 font-medium">Tamanho</th>
+                  <th className="text-left px-4 py-3 font-medium">Modificado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {entries.map((entry) => (
+                  <tr key={entry.fullPath} onClick={() => openEntry(entry)}
+                    className={`${entry.isDirectory ? 'cursor-pointer hover:bg-gray-800/80' : 'hover:bg-gray-800/40'}`}>
+                    <td className="px-4 py-3 font-mono text-gray-100">
+                      <span className="mr-2">{entry.isDirectory ? '📁' : '📄'}</span>{entry.name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs ${entry.isDirectory ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
+                        {entry.isDirectory ? 'Pasta' : 'Arquivo'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-400 font-mono">{entry.isDirectory ? '-' : formatBytes(entry.sizeBytes)}</td>
+                    <td className="px-4 py-3 text-gray-400 font-mono">{new Date(entry.lastModifiedUtc).toLocaleString('pt-BR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ConexaoSftpFormModal({ initial, onSave, onCancel }: {
   initial: ConexaoSftp | null;
   onSave: (form: ConexaoSftpForm) => void;
@@ -169,7 +305,7 @@ function ConexaoSftpFormModal({ initial, onSave, onCancel }: {
     nrPorta: initial?.nrPorta ?? 22,
     dsUsuario: initial?.dsUsuario ?? '',
     dsSenhaPlaintext: '',
-    dsCaminhoChavePrivada: initial?.dsCaminhoChavePrivada ?? '',
+    dsCaminhoChavePrivada: '',
     dsHorariosExecucao: initial?.dsHorariosExecucao ?? '08:00',
     dsDiasSemana: initial?.dsDiasSemana ?? 'seg,ter,qua,qui,sex',
     flArquivoObrigatorio: initial?.flArquivoObrigatorio ?? false,
@@ -196,7 +332,7 @@ function ConexaoSftpFormModal({ initial, onSave, onCancel }: {
     if (!form.nmConexao.trim()) { alert('Nome é obrigatório.'); return; }
     if (!form.dsHost.trim()) { alert('Host é obrigatório.'); return; }
     if (!form.dsUsuario.trim()) { alert('Usuário é obrigatório.'); return; }
-    if (!form.dsSenhaPlaintext && !form.dsCaminhoChavePrivada && !initial?.flPossuiSenha) {
+    if (!form.dsSenhaPlaintext && !form.dsCaminhoChavePrivada && !initial?.flPossuiSenha && !initial?.flPossuiChavePrivada) {
       alert('Informe a senha ou o caminho da chave privada.'); return;
     }
     onSave(form);

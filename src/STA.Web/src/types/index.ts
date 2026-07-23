@@ -113,7 +113,7 @@ export interface ConexaoSftp {
   nrPorta: number;
   dsUsuario: string;
   flPossuiSenha: boolean;
-  dsCaminhoChavePrivada: string | null;
+  flPossuiChavePrivada: boolean;
   dsHorariosExecucao: string;
   dsDiasSemana: string;
   flArquivoObrigatorio: boolean;
@@ -121,6 +121,19 @@ export interface ConexaoSftp {
   flAtivo: boolean;
   dtCriacao: string;
   dtUltimoUso: string | null;
+}
+
+export interface SftpRemoteEntry {
+  name: string;
+  fullPath: string;
+  isDirectory: boolean;
+  sizeBytes: number;
+  lastModifiedUtc: string;
+}
+
+export interface BrowseSftpResult {
+  currentPath: string;
+  entries: SftpRemoteEntry[];
 }
 
 export interface LogSftp {

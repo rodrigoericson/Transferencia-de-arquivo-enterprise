@@ -36,11 +36,28 @@ public class SftpClientWrapper : ISftpClientWrapper
         return _client.Exists(path);
     }
 
+    public bool DirectoryExists(string path)
+    {
+        return _client.Exists(path) && _client.GetAttributes(path).IsDirectory;
+    }
+
     public IEnumerable<string> ListDirectory(string path)
     {
         return _client.ListDirectory(path)
             .Where(f => f.Name != "." && f.Name != "..")
             .Select(f => f.Name);
+    }
+
+    public IEnumerable<SftpRemoteEntry> ListDirectoryDetailed(string path)
+    {
+        return _client.ListDirectory(path)
+            .Where(f => f.Name != "." && f.Name != "..")
+            .Select(f => new SftpRemoteEntry(
+                f.Name,
+                f.FullName,
+                f.IsDirectory,
+                f.Length,
+                f.LastWriteTimeUtc));
     }
 
     public void Dispose()

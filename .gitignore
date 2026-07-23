@@ -42,5 +42,8 @@ appsettings.Production.json
 ## Test data (local)
 test-data/
 
+## Graphify (knowledge graph local)
+graphify-out/
+
 ## Legacy (VB.NET original + paths.xml de produção)
 legacy/
