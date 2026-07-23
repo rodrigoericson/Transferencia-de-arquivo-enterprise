@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Status](https://img.shields.io/badge/status-ativo-3DDC84?style=flat-square)
-![Cobertura](https://img.shields.io/badge/cobertura-108%2F108%20testes-3DDC84?style=flat-square\&logo=xunit\&logoColor=white)
+![Cobertura](https://img.shields.io/badge/cobertura-114%2F114%20testes-3DDC84?style=flat-square\&logo=xunit\&logoColor=white)
 ![Fase](https://img.shields.io/badge/n%C3%ADvel-1%20%E2%9C%93%20TAE--STA%20Local-FF6B6B?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-.NET%2010%20%2B%20React%20%2B%20Postgres-512BD4?style=flat-square\&logo=.net\&logoColor=white)
 
@@ -33,11 +33,12 @@ Serviço Windows para automatizar a transferência de arquivos entre servidores,
 * Rename por destino com placeholders (`{NAME}`, `{DATE}`, `{TIME}`, `{EXT}`)
 * Registro detalhado por arquivo (log granular)
 * Pause/Resume do Worker sem restart
-* **API REST completa** (36 endpoints, JWT, Rate Limiting)
+* **API REST completa** (38 endpoints, JWT, Rate Limiting)
 * **Frontend React** (Dashboard, CRUD, Logs, Auditoria)
 * **Segurança**: AD/LDAP (Samba) + BCrypt fallback + Roles (Admin/Operator/Viewer)
 * **Audit trail**: registra quem fez o quê no sistema (somente Admin)
-* Cobertura de testes automatizados (108 testes)
+* Cobertura de testes automatizados (114 testes)
+* **Browse SFTP remoto** (explorar pastas e arquivos do servidor parceiro)
 
 ---
 
@@ -145,7 +146,7 @@ DOCS.md                  # Documentação técnica completa
 * ✅ Worker Service com janela horária
 * ✅ Transferência com fan-out + compactação
 * ✅ Log granular por arquivo
-* ✅ API REST completa (36 endpoints)
+* ✅ API REST completa (38 endpoints)
 * ✅ Frontend React (Dashboard, CRUD, Logs)
 * ✅ Segurança (AD/LDAP + BCrypt + Roles + Rate Limiting)
 * ✅ Rename por destino (placeholders)
