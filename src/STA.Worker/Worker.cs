@@ -127,7 +127,7 @@ public class Worker : BackgroundService
         var purgeService = scope.ServiceProvider.GetRequiredService<IFilePurgeService>();
 
         // Pool SFTP: abre conexões no início do ciclo, fecha no fim
-        using var sftpPool = new STA.Core.Services.Transports.SftpConnectionPool(
+        var sftpPool = new STA.Core.Services.Transports.SftpConnectionPool(
             scope.ServiceProvider.GetRequiredService<STA.Core.Services.Transports.ISftpClientFactory>(),
             scope.ServiceProvider.GetRequiredService<STA.Core.Services.Transports.ICredencialProtector>(),
             scope.ServiceProvider.GetRequiredService<ILogger<STA.Core.Services.Transports.SftpConnectionPool>>(),
@@ -167,9 +167,10 @@ public class Worker : BackgroundService
         }
         finally
         {
-            // Garante que o log SEMPRE fecha (nunca fica órfão com status 'R')
             await FecharLogCicloAsync(logRepository, settings, dtInicio, totals, cnLogProcesso, stoppingToken);
             _estado.FinalizarCiclo(totals.FilesProcessed, DateTime.UtcNow.Add(_interval));
+            await sftpPool.FlushLogsAsync(stoppingToken);
+            sftpPool.Dispose();
         }
         ReportarResultado(totals);
     }

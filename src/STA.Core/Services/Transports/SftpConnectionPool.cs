@@ -9,6 +9,7 @@ public class SftpConnectionPool : IDisposable
 {
     private readonly Dictionary<int, ISftpClientWrapper> _pool = new();
     private readonly object _poolLock = new();
+    private readonly List<LogSftp> _pendingLogs = new();
     private readonly ISftpClientFactory _factory;
     private readonly ICredencialProtector _protector;
     private readonly ILogSftpRepository? _logSftpRepository;
@@ -36,7 +37,7 @@ public class SftpConnectionPool : IDisposable
                     return existing;
 
                 _logger.LogWarning("Conexao SFTP '{Nome}' perdida. Reconectando...", conexao.NmConexao);
-                GravarLogConexao(conexao, "W", "Conexão perdida — reconectando");
+                EnqueueLog(conexao, "W", "Conexão perdida — reconectando");
                 try { existing.Dispose(); } catch { }
                 _pool.Remove(conexao.CnConexaoSftp);
             }
@@ -51,7 +52,7 @@ public class SftpConnectionPool : IDisposable
 
                 _logger.LogInformation("Conexao SFTP '{Nome}' ({Host}:{Porta}) aberta em {Ms}ms.",
                     conexao.NmConexao, conexao.DsHost, conexao.NrPorta, sw.ElapsedMilliseconds);
-                GravarLogConexao(conexao, "S", $"Conectado em {sw.ElapsedMilliseconds}ms — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})", (int)sw.ElapsedMilliseconds);
+                EnqueueLog(conexao, "S", $"Conectado em {sw.ElapsedMilliseconds}ms — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})", (int)sw.ElapsedMilliseconds);
 
                 return client;
             }
@@ -60,28 +61,37 @@ public class SftpConnectionPool : IDisposable
                 sw.Stop();
                 _logger.LogError(ex, "Falha ao conectar SFTP '{Nome}' ({Host}:{Porta}).",
                     conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
-                GravarLogConexao(conexao, "E", $"Falha de conexão: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario}, tentativa: {sw.ElapsedMilliseconds}ms)", (int)sw.ElapsedMilliseconds);
+                EnqueueLog(conexao, "E", $"Falha de conexão: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario}, tentativa: {sw.ElapsedMilliseconds}ms)", (int)sw.ElapsedMilliseconds);
                 throw;
             }
         }
     }
 
-    private void GravarLogConexao(ConexaoSftp conexao, string status, string mensagem, int? duracaoMs = null)
+    private void EnqueueLog(ConexaoSftp conexao, string status, string mensagem, int? duracaoMs = null)
     {
-        if (_logSftpRepository == null) return;
-        try
+        _pendingLogs.Add(new LogSftp
         {
-            _logSftpRepository.InserirAsync(new LogSftp
-            {
-                CnConexaoSftp = conexao.CnConexaoSftp,
-                IdTipo = "CONEXAO",
-                IdStatus = status,
-                NrDuracaoMs = duracaoMs,
-                DsMensagem = mensagem,
-                DtEvento = DateTime.UtcNow
-            }).GetAwaiter().GetResult();
+            CnConexaoSftp = conexao.CnConexaoSftp,
+            IdTipo = "CONEXAO",
+            IdStatus = status,
+            NrDuracaoMs = duracaoMs,
+            DsMensagem = mensagem,
+            DtEvento = DateTime.UtcNow
+        });
+    }
+
+    public async Task FlushLogsAsync(CancellationToken ct = default)
+    {
+        if (_logSftpRepository == null || _pendingLogs.Count == 0) return;
+
+        var logs = _pendingLogs.ToList();
+        _pendingLogs.Clear();
+
+        foreach (var log in logs)
+        {
+            try { await _logSftpRepository.InserirAsync(log, ct); }
+            catch { }
         }
-        catch { }
     }
 
     public void CloseAll()
