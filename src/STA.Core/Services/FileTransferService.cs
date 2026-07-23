@@ -169,18 +169,22 @@ public class FileTransferService : IFileTransferService
 
                             if (dest.Conexao != null)
                             {
-                                try { await _logSftpRepository.InserirAsync(new LogSftp
+                                try
                                 {
-                                    CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                                    CnRotaDestino = dest.Destino.CnRotaDestino,
-                                    IdTipo = "UPLOAD",
-                                    IdStatus = "S",
-                                    NmArquivo = destFileName,
-                                    NrTamanhoBytes = file.Length,
-                                    NrDuracaoMs = (int)sw.ElapsedMilliseconds,
-                                    DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
-                                    DtEvento = DateTime.UtcNow
-                                }, cancellationToken); } catch { }
+                                    await _logSftpRepository.InserirAsync(new LogSftp
+                                    {
+                                        CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                                        CnRotaDestino = dest.Destino.CnRotaDestino,
+                                        IdTipo = "UPLOAD",
+                                        IdStatus = "S",
+                                        NmArquivo = destFileName,
+                                        NrTamanhoBytes = file.Length,
+                                        NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                                        DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
+                                        DtEvento = DateTime.UtcNow
+                                    }, cancellationToken);
+                                }
+                                catch { }
                             }
                         }
                         else
@@ -198,16 +202,20 @@ public class FileTransferService : IFileTransferService
 
                         if (dest.Destino?.IdProtocolo == "SFTP" && dest.Conexao != null)
                         {
-                            try { await _logSftpRepository.InserirAsync(new LogSftp
+                            try
                             {
-                                CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                                CnRotaDestino = dest.Destino.CnRotaDestino,
-                                IdTipo = "ERRO",
-                                IdStatus = "E",
-                                NmArquivo = file.Name,
-                                DsMensagem = ex.Message,
-                                DtEvento = DateTime.UtcNow
-                            }, cancellationToken); } catch { }
+                                await _logSftpRepository.InserirAsync(new LogSftp
+                                {
+                                    CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                                    CnRotaDestino = dest.Destino.CnRotaDestino,
+                                    IdTipo = "ERRO",
+                                    IdStatus = "E",
+                                    NmArquivo = file.Name,
+                                    DsMensagem = ex.Message,
+                                    DtEvento = DateTime.UtcNow
+                                }, cancellationToken);
+                            }
+                            catch { }
                         }
                         fanOutOk = false;
                     }

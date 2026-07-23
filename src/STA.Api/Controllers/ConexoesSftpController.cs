@@ -272,15 +272,19 @@ public class ConexoesSftpController : ControllerBase
         catch (Exception ex)
         {
             sw.Stop();
-            try { await _logSftpRepository.InserirAsync(new STA.Core.Data.Entities.LogSftp
+            try
             {
-                CnConexaoSftp = conexao.CnConexaoSftp,
-                IdTipo = "CONEXAO",
-                IdStatus = "E",
-                NrDuracaoMs = (int)sw.ElapsedMilliseconds,
-                DsMensagem = "Falha ao testar conexão SFTP",
-                DtEvento = DateTime.UtcNow
-            }, ct); } catch { }
+                await _logSftpRepository.InserirAsync(new STA.Core.Data.Entities.LogSftp
+                {
+                    CnConexaoSftp = conexao.CnConexaoSftp,
+                    IdTipo = "CONEXAO",
+                    IdStatus = "E",
+                    NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                    DsMensagem = "Falha ao testar conexão SFTP",
+                    DtEvento = DateTime.UtcNow
+                }, ct);
+            }
+            catch { }
 
             return Ok(new ApiResponse<TestarConexaoResultDto>(true,
                 new TestarConexaoResultDto(false, "Falha ao conectar. Verifique host, porta, credenciais e conectividade.")));
