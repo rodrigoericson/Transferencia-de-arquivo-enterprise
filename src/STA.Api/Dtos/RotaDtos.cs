@@ -15,7 +15,12 @@ public record RotaDto(
     long NrTamanhoFinalBytes,
     bool FlExcluirOrigem,
     bool FlAtivo,
-    int QuantidadeDestinos);
+    int QuantidadeDestinos,
+    bool FlHabilitarRetorno,
+    int? CnConexaoSftpRetorno,
+    string? DsDiretorioRetorno,
+    string DsMascaraRetorno,
+    string? DsDiretorioLocalRetorno);
 
 public record CreateRotaDto(
     [Required] int CnEtapa,
@@ -27,7 +32,12 @@ public record CreateRotaDto(
     [Range(0, 3650)] int NrDiasExcluir = 0,
     long NrTamanhoInicialBytes = 0,
     long NrTamanhoFinalBytes = 0,
-    bool FlExcluirOrigem = true);
+    bool FlExcluirOrigem = true,
+    bool FlHabilitarRetorno = false,
+    int? CnConexaoSftpRetorno = null,
+    [StringLength(500)] string? DsDiretorioRetorno = null,
+    [StringLength(200)] string DsMascaraRetorno = "*",
+    [StringLength(500)] string? DsDiretorioLocalRetorno = null);
 
 public record UpdateRotaDto(
     [Range(1, 9999)] int NrOrdem,
@@ -39,4 +49,9 @@ public record UpdateRotaDto(
     long NrTamanhoInicialBytes = 0,
     long NrTamanhoFinalBytes = 0,
     bool FlExcluirOrigem = true,
-    bool FlAtivo = true);
+    bool FlAtivo = true,
+    bool FlHabilitarRetorno = false,
+    int? CnConexaoSftpRetorno = null,
+    [StringLength(500)] string? DsDiretorioRetorno = null,
+    [StringLength(200)] string DsMascaraRetorno = "*",
+    [StringLength(500)] string? DsDiretorioLocalRetorno = null);

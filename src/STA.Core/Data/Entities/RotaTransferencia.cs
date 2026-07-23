@@ -26,7 +26,15 @@ public class RotaTransferencia
 
     public bool FlAtivo { get; set; } = true;
 
+    // Retorno SFTP (Bloco 13)
+    public bool FlHabilitarRetorno { get; set; }
+    public int? CnConexaoSftpRetorno { get; set; }
+    public string? DsDiretorioRetorno { get; set; }
+    public string DsMascaraRetorno { get; set; } = "*";
+    public string? DsDiretorioLocalRetorno { get; set; }
+
     // Navigation properties
     public EtapaTransferencia? Etapa { get; set; }
+    public ConexaoSftp? ConexaoSftpRetorno { get; set; }
     public ICollection<RotaDestino> Destinos { get; set; } = new List<RotaDestino>();
 }

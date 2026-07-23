@@ -12,4 +12,9 @@ public record TransferPath(
     long TamanhoFinalArqBytes,
     int? CnEtapa = null,
     int? CnRota = null,
-    bool FlExcluirOrigem = true);
+    bool FlExcluirOrigem = true,
+    bool FlHabilitarRetorno = false,
+    int? CnConexaoSftpRetorno = null,
+    string? DsDiretorioRetorno = null,
+    string DsMascaraRetorno = "*",
+    string? DsDiretorioLocalRetorno = null);

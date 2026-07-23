@@ -40,6 +40,11 @@ export interface Rota {
   flExcluirOrigem: boolean;
   flAtivo: boolean;
   quantidadeDestinos: number;
+  flHabilitarRetorno: boolean;
+  cnConexaoSftpRetorno: number | null;
+  dsDiretorioRetorno: string | null;
+  dsMascaraRetorno: string;
+  dsDiretorioLocalRetorno: string | null;
 }
 
 export interface Destino {

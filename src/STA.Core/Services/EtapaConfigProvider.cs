@@ -44,7 +44,12 @@ public class EtapaConfigProvider : IEtapaConfigProvider
                     TamanhoFinalArqBytes: rota.NrTamanhoFinalBytes,
                     CnEtapa: etapa.CnEtapa,
                     CnRota: rota.CnRota,
-                    FlExcluirOrigem: rota.FlExcluirOrigem));
+                    FlExcluirOrigem: rota.FlExcluirOrigem,
+                    FlHabilitarRetorno: rota.FlHabilitarRetorno,
+                    CnConexaoSftpRetorno: rota.CnConexaoSftpRetorno,
+                    DsDiretorioRetorno: rota.DsDiretorioRetorno,
+                    DsMascaraRetorno: rota.DsMascaraRetorno,
+                    DsDiretorioLocalRetorno: rota.DsDiretorioLocalRetorno));
 
                 // Cada destino gera um nó destino
                 foreach (var destino in rota.Destinos)

@@ -58,7 +58,12 @@ public class RotasController : ControllerBase
                 r.NrTamanhoFinalBytes,
                 r.FlExcluirOrigem,
                 r.FlAtivo,
-                r.Destinos.Count))
+                r.Destinos.Count,
+                r.FlHabilitarRetorno,
+                r.CnConexaoSftpRetorno,
+                r.DsDiretorioRetorno,
+                r.DsMascaraRetorno,
+                r.DsDiretorioLocalRetorno))
             .ToListAsync(ct);
 
         var result = new PaginatedResponse<RotaDto>(items, total, page, pageSize);
@@ -84,7 +89,12 @@ public class RotasController : ControllerBase
                 r.NrTamanhoFinalBytes,
                 r.FlExcluirOrigem,
                 r.FlAtivo,
-                r.Destinos.Count))
+                r.Destinos.Count,
+                r.FlHabilitarRetorno,
+                r.CnConexaoSftpRetorno,
+                r.DsDiretorioRetorno,
+                r.DsMascaraRetorno,
+                r.DsDiretorioLocalRetorno))
             .FirstOrDefaultAsync(ct);
 
         if (rota is null)
@@ -113,7 +123,12 @@ public class RotasController : ControllerBase
             NrTamanhoInicialBytes = dto.NrTamanhoInicialBytes,
             NrTamanhoFinalBytes = dto.NrTamanhoFinalBytes,
             FlExcluirOrigem = dto.FlExcluirOrigem,
-            FlAtivo = true
+            FlAtivo = true,
+            FlHabilitarRetorno = dto.FlHabilitarRetorno,
+            CnConexaoSftpRetorno = dto.CnConexaoSftpRetorno,
+            DsDiretorioRetorno = dto.DsDiretorioRetorno,
+            DsMascaraRetorno = dto.DsMascaraRetorno,
+            DsDiretorioLocalRetorno = dto.DsDiretorioLocalRetorno
         };
 
         _context.Rotas.Add(rota);
@@ -127,7 +142,9 @@ public class RotasController : ControllerBase
             rota.CnRota, rota.CnEtapa, rota.NrOrdem, rota.DsDiretorioOrigem,
             rota.DsDiretorioBackup, rota.DsMascaraArquivo, rota.DsCompactaOrigemTipo,
             rota.NrDiasExcluir, rota.NrTamanhoInicialBytes, rota.NrTamanhoFinalBytes,
-            rota.FlExcluirOrigem, rota.FlAtivo, 0);
+            rota.FlExcluirOrigem, rota.FlAtivo, 0,
+            rota.FlHabilitarRetorno, rota.CnConexaoSftpRetorno,
+            rota.DsDiretorioRetorno, rota.DsMascaraRetorno, rota.DsDiretorioLocalRetorno);
 
         return CreatedAtAction(nameof(GetById), new { id = rota.CnRota }, new ApiResponse<RotaDto>(true, result));
     }
@@ -150,6 +167,11 @@ public class RotasController : ControllerBase
         rota.NrTamanhoFinalBytes = dto.NrTamanhoFinalBytes;
         rota.FlExcluirOrigem = dto.FlExcluirOrigem;
         rota.FlAtivo = dto.FlAtivo;
+        rota.FlHabilitarRetorno = dto.FlHabilitarRetorno;
+        rota.CnConexaoSftpRetorno = dto.CnConexaoSftpRetorno;
+        rota.DsDiretorioRetorno = dto.DsDiretorioRetorno;
+        rota.DsMascaraRetorno = dto.DsMascaraRetorno;
+        rota.DsDiretorioLocalRetorno = dto.DsDiretorioLocalRetorno;
 
         await _context.SaveChangesAsync(ct);
         await _audit.RegistrarAsync("ROTA", rota.CnRota, "UPDATE", rota.DsDiretorioOrigem, ct);
@@ -159,7 +181,9 @@ public class RotasController : ControllerBase
             rota.CnRota, rota.CnEtapa, rota.NrOrdem, rota.DsDiretorioOrigem,
             rota.DsDiretorioBackup, rota.DsMascaraArquivo, rota.DsCompactaOrigemTipo,
             rota.NrDiasExcluir, rota.NrTamanhoInicialBytes, rota.NrTamanhoFinalBytes,
-            rota.FlExcluirOrigem, rota.FlAtivo, destinosCount);
+            rota.FlExcluirOrigem, rota.FlAtivo, destinosCount,
+            rota.FlHabilitarRetorno, rota.CnConexaoSftpRetorno,
+            rota.DsDiretorioRetorno, rota.DsMascaraRetorno, rota.DsDiretorioLocalRetorno);
 
         return Ok(new ApiResponse<RotaDto>(true, result));
     }

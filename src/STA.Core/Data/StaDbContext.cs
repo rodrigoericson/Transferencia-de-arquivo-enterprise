@@ -288,6 +288,31 @@ public class StaDbContext : DbContext
             .HasForeignKey(d => d.CnRota)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Property(r => r.FlHabilitarRetorno)
+            .HasColumnName("fl_habilitar_retorno")
+            .HasDefaultValue(false);
+
+        builder.Property(r => r.CnConexaoSftpRetorno)
+            .HasColumnName("cn_conexao_sftp_retorno");
+
+        builder.Property(r => r.DsDiretorioRetorno)
+            .HasColumnName("ds_diretorio_retorno")
+            .HasMaxLength(500);
+
+        builder.Property(r => r.DsMascaraRetorno)
+            .HasColumnName("ds_mascara_retorno")
+            .HasMaxLength(200)
+            .HasDefaultValue("*");
+
+        builder.Property(r => r.DsDiretorioLocalRetorno)
+            .HasColumnName("ds_diretorio_local_retorno")
+            .HasMaxLength(500);
+
+        builder.HasOne(r => r.ConexaoSftpRetorno)
+            .WithMany()
+            .HasForeignKey(r => r.CnConexaoSftpRetorno)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(r => new { r.CnEtapa, r.NrOrdem });
     }
 
