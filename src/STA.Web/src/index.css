@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --color-gray-950: #000000;
+}
+
 /* Scrollbar customizada (dark theme) */
 ::-webkit-scrollbar {
   width: 6px;
