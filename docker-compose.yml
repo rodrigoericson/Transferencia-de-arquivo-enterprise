@@ -38,10 +38,23 @@ services:
     privileged: true
     restart: unless-stopped
 
+  sftp-test:
+    image: atmoz/sftp
+    container_name: sta-sftp-test
+    command: stauser:StaTest2026:1001
+    ports:
+      - "2222:22"
+    volumes:
+      - sftp-upload:/home/stauser/upload
+      - sftp-retorno:/home/stauser/retorno
+    restart: unless-stopped
+
 volumes:
   sta-pgdata:
   samba-data:
   samba-config:
+  sftp-upload:
+  sftp-retorno:
 
 networks:
   sta-net:

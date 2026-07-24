@@ -220,7 +220,7 @@ STA.sln
 │   └── STA.Database/          # SQL de referência (functions, seeds)
 │
 ├── tests/
-│   └── STA.Tests/             # 114 testes (xUnit + Moq)
+│   └── STA.Tests/             # 120 testes (xUnit + Moq)
 │
 ├── docker-compose.yml         # PostgreSQL dev
 ├── README.md                  # Overview visual
