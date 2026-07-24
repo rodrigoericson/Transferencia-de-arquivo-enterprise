@@ -131,7 +131,8 @@ public class ReturnDownloadServiceTests
         var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, CancellationToken.None);
 
         Assert.Equal(0, result.FilesSucceeded);
-        Assert.Equal(1, result.FilesFailed);
+        Assert.Equal(0, result.FilesFailed);
+        Assert.Equal(0, result.FilesProcessed);
         _clientMock.Verify(c => c.DownloadFile(It.IsAny<string>(), It.IsAny<Stream>()), Times.Never);
 
         Directory.Delete(config.DsDiretorioLocalRetorno!, true);

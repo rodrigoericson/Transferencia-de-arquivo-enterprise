@@ -50,6 +50,12 @@ public class ReturnDownloadService : IReturnDownloadService
             || string.IsNullOrWhiteSpace(config.DsDiretorioLocalRetorno))
             return new FileTransferResult(0, 0, 0, []);
 
+        if (!SftpPathValidator.TryNormalize(config.DsDiretorioRetorno, out var normalizedRetornoDir, out var erroPath))
+        {
+            _logger.LogWarning("Diretório de retorno inválido: {Erro}", erroPath);
+            return new FileTransferResult(0, 0, 0, [$"Configuração inválida: {erroPath}"]);
+        }
+
         var errors = new List<string>();
         int succeeded = 0, failed = 0;
 
@@ -60,7 +66,7 @@ public class ReturnDownloadService : IReturnDownloadService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Não foi possível criar diretório local de retorno: '{Path}'.", config.DsDiretorioLocalRetorno);
-            return new FileTransferResult(0, 0, 1, [$"Erro ao criar diretório local de retorno: {config.DsDiretorioLocalRetorno}"]);
+            return new FileTransferResult(0, 0, 0, [$"Erro ao criar diretório local de retorno."]);
         }
 
         ISftpClientWrapper client;
@@ -71,7 +77,7 @@ public class ReturnDownloadService : IReturnDownloadService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falha ao conectar SFTP de retorno '{Nome}'.", conexaoRetorno.NmConexao);
-            return new FileTransferResult(0, 0, 1, [$"Falha ao conectar SFTP retorno: {conexaoRetorno.NmConexao}"]);
+            return new FileTransferResult(0, 0, 0, [$"Falha ao conectar SFTP retorno."]);
         }
 
         var transport = new SftpTransport(client, _logger as ILogger<SftpTransport> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<SftpTransport>.Instance);
@@ -79,14 +85,14 @@ public class ReturnDownloadService : IReturnDownloadService
         List<SftpRemoteEntry> entries;
         try
         {
-            entries = client.ListDirectoryDetailed(config.DsDiretorioRetorno)
+            entries = client.ListDirectoryDetailed(normalizedRetornoDir)
                 .Where(e => !e.IsDirectory && _maskMatcher.Match(e.Name, config.DsMascaraRetorno))
                 .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Falha ao listar diretório de retorno '{Dir}'.", config.DsDiretorioRetorno);
-            return new FileTransferResult(0, 0, 1, [$"Erro ao listar diretório de retorno: {config.DsDiretorioRetorno}"]);
+            _logger.LogWarning(ex, "Falha ao listar diretório de retorno '{Dir}'.", normalizedRetornoDir);
+            return new FileTransferResult(0, 0, 0, [$"Erro ao listar diretório de retorno."]);
         }
 
         foreach (var entry in entries)
@@ -99,15 +105,26 @@ public class ReturnDownloadService : IReturnDownloadService
                 continue;
             }
 
-            var remotePath = $"{config.DsDiretorioRetorno.TrimEnd('/')}/{entry.Name}";
+            var remotePath = $"{normalizedRetornoDir.TrimEnd('/')}/{entry.Name}";
             var localPath = Path.Combine(config.DsDiretorioLocalRetorno, entry.Name);
 
+            // Fix: locked file = skip silencioso, não failure
             if (File.Exists(localPath) && _lockChecker.IsFileLocked(localPath))
             {
-                _logger.LogWarning("Arquivo local de retorno em uso, ignorado: '{File}'.", entry.Name);
-                errors.Add($"{entry.Name}: arquivo local em uso — será tentado no próximo ciclo");
-                failed++;
+                _logger.LogDebug("Arquivo local de retorno em uso, será tentado no próximo ciclo: '{File}'.", entry.Name);
                 continue;
+            }
+
+            // Fix: idempotência — se arquivo local já existe com mesmo tamanho, assumir já baixado e só tentar apagar remoto
+            if (File.Exists(localPath))
+            {
+                var localSize = new FileInfo(localPath).Length;
+                if (localSize == entry.SizeBytes)
+                {
+                    _logger.LogDebug("Arquivo de retorno já existe localmente com mesmo tamanho, apagando remoto: '{File}'.", entry.Name);
+                    try { client.DeleteFile(remotePath); } catch { }
+                    continue;
+                }
             }
 
             var dtInicio = DateTime.UtcNow;
@@ -145,10 +162,14 @@ public class ReturnDownloadService : IReturnDownloadService
                 succeeded++;
             }
             catch (OperationCanceledException) { throw; }
+            catch (Exception ex) when (ex.GetType().Name.Contains("Ssh") && ct.IsCancellationRequested)
+            {
+                throw new OperationCanceledException("Download cancelado durante operação SSH.", ex, ct);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Falha ao baixar retorno '{File}' de '{Host}'.", entry.Name, conexaoRetorno.DsHost);
-                errors.Add($"{entry.Name}: {ex.Message}");
+                errors.Add($"{entry.Name}: falha no download");
                 failed++;
 
                 try
