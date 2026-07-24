@@ -60,6 +60,7 @@ export default function Rotas() {
               <th className="py-2 px-2">Origem</th>
               <th className="py-2 px-2">Máscara</th>
               <th className="py-2 px-2">Destinos</th>
+              <th className="py-2 px-2">Retorno</th>
               <th className="py-2 px-2">Status</th>
               <th className="py-2 px-2">Ações</th>
             </tr>
@@ -71,6 +72,13 @@ export default function Rotas() {
                 <td className="py-2 px-2 font-mono text-xs truncate max-w-[300px]" title={r.dsDiretorioOrigem}>{r.dsDiretorioOrigem}</td>
                 <td className="py-2 px-2 font-mono text-xs">{r.dsMascaraArquivo}</td>
                 <td className="py-2 px-2">{r.quantidadeDestinos}</td>
+                <td className="py-2 px-2">
+                  {r.flHabilitarRetorno ? (
+                    <span className="px-2 py-0.5 rounded text-xs bg-purple-900 text-purple-300">↩ SFTP</span>
+                  ) : (
+                    <span className="text-xs text-gray-600">—</span>
+                  )}
+                </td>
                 <td className="py-2 px-2">
                   <span className={`px-2 py-0.5 rounded text-xs ${r.flAtivo ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
                     {r.flAtivo ? 'Ativo' : 'Inativo'}

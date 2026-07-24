@@ -8,11 +8,12 @@ function todayStr() {
   return new Date().toISOString().split('T')[0];
 }
 
-const TIPOS = ['', 'CONEXAO', 'UPLOAD', 'WARNING', 'ERRO', 'RETRY'];
+const TIPOS = ['', 'CONEXAO', 'UPLOAD', 'DOWNLOAD', 'WARNING', 'ERRO', 'RETRY'];
 
 const badgeColor: Record<string, string> = {
   CONEXAO: 'bg-blue-900 text-blue-300',
   UPLOAD: 'bg-green-900 text-green-300',
+  DOWNLOAD: 'bg-purple-900 text-purple-300',
   WARNING: 'bg-yellow-900 text-yellow-300',
   ERRO: 'bg-red-900 text-red-300',
   RETRY: 'bg-orange-900 text-orange-300',
