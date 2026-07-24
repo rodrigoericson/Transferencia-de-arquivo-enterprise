@@ -58,9 +58,16 @@ public static class SftpSchedulerHelper
 
         var horarios = dsHorariosExecucao
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .OrderBy(h => h)
+            .Where(h => TimeSpan.TryParse(h, out _))
+            .OrderBy(h => TimeSpan.Parse(h))
             .ToList();
 
-        return horarios.LastOrDefault() == horarioAtual;
+        if (horarios.Count == 0) return true;
+
+        var ultimo = horarios.Last();
+        if (TimeSpan.TryParse(horarioAtual, out var atual) && TimeSpan.TryParse(ultimo, out var ultimoTs))
+            return atual == ultimoTs;
+
+        return ultimo == horarioAtual;
     }
 }

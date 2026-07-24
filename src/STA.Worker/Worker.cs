@@ -290,7 +290,7 @@ public class Worker : BackgroundService
             // Limpa backups antigos (purge) baseado no primeiro nó (que tem a info de DiasExcluir)
             purgeService.PurgeNode(origem);
 
-            // Retorno SFTP: baixa arquivos do parceiro para pasta local
+            // Retorno SFTP: baixa arquivos do parceiro para pasta local (respeitando horários)
             if (origem.FlHabilitarRetorno && origem.CnConexaoSftpRetorno.HasValue)
             {
                 try
@@ -298,7 +298,18 @@ public class Worker : BackgroundService
                     var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, stoppingToken);
                     if (conexaoRetorno != null)
                     {
-                        var retResult = await returnDownloader.ProcessarRetornoAsync(origem, conexaoRetorno, sftpPool, cnLogProcesso, stoppingToken);
+                        var now = DateTime.Now;
+                        if (!STA.Core.Services.SftpSchedulerHelper.IsDiaHabilitado(conexaoRetorno.DsDiasSemana, now))
+                            continue;
+                        var horarioAtivo = STA.Core.Services.SftpSchedulerHelper.GetHorarioAtivo(
+                            conexaoRetorno.DsHorariosExecucao, now, conexaoRetorno.NrToleranciaMinutos);
+                        if (horarioAtivo == null)
+                            continue;
+
+                        var isUltimoHorario = STA.Core.Services.SftpSchedulerHelper.IsUltimoHorarioDoDia(
+                            conexaoRetorno.DsHorariosExecucao, horarioAtivo);
+
+                        var retResult = await returnDownloader.ProcessarRetornoAsync(origem, conexaoRetorno, sftpPool, cnLogProcesso, isUltimoHorario, stoppingToken);
                         totals.Add(retResult);
                     }
                 }

@@ -78,7 +78,7 @@ public class ReturnDownloadServiceTests
         var config = MakeConfig(habilitado: false);
         var pool = MakePool();
 
-        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, CancellationToken.None);
+        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, false, CancellationToken.None);
 
         Assert.Equal(0, result.FilesProcessed);
         Assert.Equal(0, result.FilesSucceeded);
@@ -102,7 +102,7 @@ public class ReturnDownloadServiceTests
         _maskMock.Setup(m => m.Match("IGNORAR.TXT", "*.RET")).Returns(false);
         _lockMock.Setup(l => l.IsFileLocked(It.IsAny<string>())).Returns(false);
 
-        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, CancellationToken.None);
+        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, false, CancellationToken.None);
 
         Assert.Equal(1, result.FilesSucceeded);
         Assert.Equal(0, result.FilesFailed);
@@ -128,7 +128,7 @@ public class ReturnDownloadServiceTests
         _maskMock.Setup(m => m.Match("LOCKED.RET", "*.RET")).Returns(true);
         _lockMock.Setup(l => l.IsFileLocked(localPath)).Returns(true);
 
-        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, CancellationToken.None);
+        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, false, CancellationToken.None);
 
         Assert.Equal(0, result.FilesSucceeded);
         Assert.Equal(0, result.FilesFailed);
@@ -153,7 +153,7 @@ public class ReturnDownloadServiceTests
         _lockMock.Setup(l => l.IsFileLocked(It.IsAny<string>())).Returns(false);
         _clientMock.Setup(c => c.DeleteFile("/retorno/FILE.RET")).Throws(new Exception("permission denied"));
 
-        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, CancellationToken.None);
+        var result = await _service.ProcessarRetornoAsync(config, MakeConexao(), pool, null, false, CancellationToken.None);
 
         Assert.Equal(1, result.FilesSucceeded);
         Assert.Equal(0, result.FilesFailed);

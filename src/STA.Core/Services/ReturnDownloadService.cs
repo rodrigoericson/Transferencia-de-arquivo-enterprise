@@ -13,6 +13,7 @@ public interface IReturnDownloadService
         ConexaoSftp conexaoRetorno,
         SftpConnectionPool pool,
         int? cnLogProcesso,
+        bool isUltimoHorario,
         CancellationToken ct);
 }
 
@@ -43,6 +44,7 @@ public class ReturnDownloadService : IReturnDownloadService
         ConexaoSftp conexaoRetorno,
         SftpConnectionPool pool,
         int? cnLogProcesso,
+        bool isUltimoHorario,
         CancellationToken ct)
     {
         if (!config.FlHabilitarRetorno
@@ -156,7 +158,10 @@ public class ReturnDownloadService : IReturnDownloadService
                 }
                 catch (Exception exDel)
                 {
-                    _logger.LogWarning(exDel, "Falha ao apagar arquivo remoto após download: '{Path}'.", remotePath);
+                    if (isUltimoHorario)
+                        _logger.LogError(exDel, "Falha ao apagar arquivo remoto (última execução do dia): '{Path}'. Verifique permissão de exclusão no SFTP.", remotePath);
+                    else
+                        _logger.LogWarning(exDel, "Falha ao apagar arquivo remoto após download: '{Path}'. Será tentado na próxima execução.", remotePath);
                 }
 
                 succeeded++;
