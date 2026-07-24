@@ -44,6 +44,7 @@ var builder = Host.CreateDefaultBuilder(args)
         });
 
         // Worker support services
+        services.AddScoped<IReturnDownloadService, ReturnDownloadService>();
         services.AddScoped<IWorkerPauseService, WorkerPauseService>();
         services.AddScoped<ITransferRouteProvider, TransferRouteProvider>();
 

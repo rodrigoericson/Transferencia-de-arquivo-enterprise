@@ -60,6 +60,11 @@ public class SftpClientWrapper : ISftpClientWrapper
                 f.LastWriteTimeUtc));
     }
 
+    public void DownloadFile(string remotePath, Stream output)
+    {
+        _client.DownloadFile(remotePath, output);
+    }
+
     public void Dispose()
     {
         if (_client.IsConnected)

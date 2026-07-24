@@ -134,6 +134,7 @@ public class Worker : BackgroundService
             scope.ServiceProvider.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>());
         if (transferService is STA.Core.Services.FileTransferService fts)
             fts.SetSftpPool(sftpPool);
+        var returnDownloader = scope.ServiceProvider.GetRequiredService<STA.Core.Services.IReturnDownloadService>();
         var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
 
         var chains = await CarregarChainsAsync(etapaProvider, pathLoader, settings, logRepository, stoppingToken);
@@ -160,7 +161,7 @@ public class Worker : BackgroundService
         bool cycleFailed = false;
         try
         {
-            totals = await ProcessarChainsAsync(chains, transferService, purgeService, settings, cnLogProcesso, stoppingToken);
+            totals = await ProcessarChainsAsync(chains, transferService, purgeService, returnDownloader, sftpPool, settings, cnLogProcesso, stoppingToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -255,6 +256,8 @@ public class Worker : BackgroundService
         IReadOnlyList<STA.Core.Models.TransferChain> chains,
         IFileTransferService transferService,
         IFilePurgeService purgeService,
+        STA.Core.Services.IReturnDownloadService returnDownloader,
+        STA.Core.Services.Transports.SftpConnectionPool sftpPool,
         StaSettings settings,
         int? cnLogProcesso,
         CancellationToken stoppingToken)
@@ -286,6 +289,25 @@ public class Worker : BackgroundService
 
             // Limpa backups antigos (purge) baseado no primeiro nó (que tem a info de DiasExcluir)
             purgeService.PurgeNode(origem);
+
+            // Retorno SFTP: baixa arquivos do parceiro para pasta local
+            if (origem.FlHabilitarRetorno && origem.CnConexaoSftpRetorno.HasValue)
+            {
+                try
+                {
+                    var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, stoppingToken);
+                    if (conexaoRetorno != null)
+                    {
+                        var retResult = await returnDownloader.ProcessarRetornoAsync(origem, conexaoRetorno, sftpPool, cnLogProcesso, stoppingToken);
+                        totals.Add(retResult);
+                    }
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falha ao processar retorno SFTP da rota '{Rota}'.", origem.CnRota);
+                }
+            }
         }
 
         return totals;
@@ -400,6 +422,21 @@ public class Worker : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Falha ao buscar parâmetros. Mantendo último snapshot válido.");
+        }
+    }
+
+    private async Task<STA.Core.Data.Entities.ConexaoSftp?> BuscarConexaoSftpAsync(int cnConexaoSftp, CancellationToken ct)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<STA.Core.Data.StaDbContext>();
+            return await context.ConexoesSftp.FindAsync([cnConexaoSftp], ct);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch
+        {
+            return null;
         }
     }
 

@@ -106,6 +106,29 @@ public class SftpTransport : IDestinationTransport
         }
     }
 
+    public async Task DownloadFileAsync(string remotePath, string localPath, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        EnsureConnected();
+
+        var partPath = $"{localPath}.{Guid.NewGuid().ToString("N")[..8]}.part";
+        try
+        {
+            using (var fs = File.Create(partPath))
+                _client.DownloadFile(remotePath, fs);
+
+            ct.ThrowIfCancellationRequested();
+            File.Move(partPath, localPath, overwrite: true);
+        }
+        catch
+        {
+            try { if (File.Exists(partPath)) File.Delete(partPath); } catch { }
+            throw;
+        }
+
+        await Task.CompletedTask;
+    }
+
     public Task<IReadOnlyList<SftpRemoteEntry>> BrowseDirectoryAsync(string remoteDirectory, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();

@@ -14,6 +14,7 @@ public interface ISftpClientWrapper : IDisposable
     bool DirectoryExists(string path);
     IEnumerable<string> ListDirectory(string path);
     IEnumerable<SftpRemoteEntry> ListDirectoryDetailed(string path);
+    void DownloadFile(string remotePath, Stream output);
 }
 
 public interface ISftpClientFactory
