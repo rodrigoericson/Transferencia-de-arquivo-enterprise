@@ -52,7 +52,7 @@ docker compose up -d
 
 # SFTP de teste disponível em localhost:2222
 # Usuário: stauser | Senha: StaTest2026
-# Pastas: /home/stauser/upload e /home/stauser/retorno
+# Pastas: /home/stauser/entrada e /home/stauser/saida
 
 # 2. Criar/atualizar tabelas
 cd src/STA.Worker
