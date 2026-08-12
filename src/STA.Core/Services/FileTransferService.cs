@@ -79,18 +79,7 @@ public class FileTransferService : IFileTransferService
             return new FileTransferResult(0, 0, 0, [$"Diretório de origem não existe: {sourceDirectory}"]);
         }
 
-        foreach (var dest in destinos)
-        {
-            if (dest.Destino?.IdProtocolo == "SFTP")
-                continue;
-            try { Directory.CreateDirectory(dest.Diretorio); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de destino: '{Path}'.", dest.Diretorio); }
-        }
-        if (!string.IsNullOrWhiteSpace(config.DiretorioBackup))
-        {
-            try { Directory.CreateDirectory(config.DiretorioBackup); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de backup: '{Path}'.", config.DiretorioBackup); }
-        }
+        PrepareDiretories(destinos, config);
 
         if (destinos.Count == 0)
         {
@@ -106,154 +95,217 @@ public class FileTransferService : IFileTransferService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!_maskMatcher.Match(file.Name, config.MascaraArq))
-                continue;
+            var (fileSucceeded, fileErrors) = await ProcessFileAsync(
+                file, config, sourceDirectory, destinos, overwriteExisting, timeoutCompactacaoMs, cnLogProcesso, cancellationToken);
 
-            if (_lockChecker.IsFileLocked(file.FullName))
-            {
-                _logger.LogWarning("Arquivo em uso, ignorado: '{File}'.", file.Name);
-                await GravarLogArquivoAsync(
-                    cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
-                    file.Length, DateTime.UtcNow, "W", "Arquivo em uso (locked) — será tentado no próximo ciclo", false, false, cancellationToken);
-                continue;
-            }
-
-            if (!_sizeValidator.IsWithinRange(file.Length, config.TamanhoInicialArqBytes, config.TamanhoFinalArqBytes))
-            {
-                _logger.LogDebug("Arquivo fora da faixa de tamanho: '{File}' ({Size} bytes).", file.Name, file.Length);
-                continue;
-            }
-
-            // Processa 1 arquivo por vez: backup + fan-out para todos os destinos + apaga origem só no final
-            var dtInicioArquivo = DateTime.UtcNow;
-            bool compressed = false;
-            try
-            {
-                var (filePath, fileName, wasCompressed) = await TryCompressAsync(file, config, sourceDirectory, timeoutCompactacaoMs, cancellationToken);
-                compressed = wasCompressed;
-
-                // 1. Backup (se configurado) — se falhar e backup era esperado, não apaga origem
-                bool backupOk = CopyToBackup(filePath, fileName, config.DiretorioBackup, overwriteExisting);
-
-                // 2. Fan-out: copia para TODOS os destinos, rastreia resultado por destino
-                bool fanOutOk = true;
-                var destResults = new List<(string Dir, bool Ok, string? Erro)>();
-                var resolvedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var dest in destinos)
-                {
-                    try
-                    {
-                        var destFileName = AplicarRename(fileName, dest.PadraoRename);
-                        if (destFileName.Contains("..") || destFileName.Contains('/') || destFileName.Contains('\\'))
-                        {
-                            _logger.LogWarning("Rename pattern gerou nome inseguro: '{Name}'. Usando nome original.", destFileName);
-                            destFileName = fileName;
-                        }
-                        var destIdentity = dest.Destino?.IdProtocolo == "SFTP" ? $"SFTP:{dest.Destino?.CnRotaDestino}" : $"LOCAL:{dest.Diretorio}";
-                        var destKey = $"{destIdentity}|{destFileName}";
-                        if (!resolvedNames.Add(destKey))
-                        {
-                            _logger.LogWarning("Colisão de nome no destino: '{Dir}/{Name}'. Arquivo ignorado para este destino.", dest.Diretorio, destFileName);
-                            destResults.Add((dest.Diretorio, false, $"Colisão de rename: {destFileName}"));
-                            fanOutOk = false;
-                            continue;
-                        }
-                        if (dest.Destino != null && dest.Destino.IdProtocolo == "SFTP")
-                        {
-                            var remotePath = CombinePosixPath(dest.Diretorio, destFileName);
-                            var transport = _transportFactory.Criar(dest.Destino, dest.Conexao, _sftpPool);
-                            var sw = Stopwatch.StartNew();
-                            await transport.UploadFileAsync(filePath, remotePath, overwriteExisting, cancellationToken);
-                            sw.Stop();
-
-                            if (dest.Conexao != null)
-                            {
-                                try
-                                {
-                                    await _logSftpRepository.InserirAsync(new LogSftp
-                                    {
-                                        CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                                        CnRotaDestino = dest.Destino.CnRotaDestino,
-                                        IdTipo = "UPLOAD",
-                                        IdStatus = "S",
-                                        NmArquivo = destFileName,
-                                        NrTamanhoBytes = file.Length,
-                                        NrDuracaoMs = (int)sw.ElapsedMilliseconds,
-                                        DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
-                                        DtEvento = DateTime.UtcNow
-                                    }, cancellationToken);
-                                }
-                                catch { }
-                            }
-                        }
-                        else
-                        {
-                            CopyToDestination(filePath, destFileName, dest.Diretorio, overwriteExisting);
-                        }
-
-                        destResults.Add((dest.Diretorio, true, null));
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Falha ao copiar '{File}' para '{Dest}'.", fileName, dest.Diretorio);
-                        errors.Add($"{file.Name} → {dest.Diretorio}: {ex.Message}");
-                        destResults.Add((dest.Diretorio, false, ex.Message));
-
-                        if (dest.Destino?.IdProtocolo == "SFTP" && dest.Conexao != null)
-                        {
-                            try
-                            {
-                                await _logSftpRepository.InserirAsync(new LogSftp
-                                {
-                                    CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                                    CnRotaDestino = dest.Destino.CnRotaDestino,
-                                    IdTipo = "ERRO",
-                                    IdStatus = "E",
-                                    NmArquivo = file.Name,
-                                    DsMensagem = ex.Message,
-                                    DtEvento = DateTime.UtcNow
-                                }, cancellationToken);
-                            }
-                            catch { }
-                        }
-                        fanOutOk = false;
-                    }
-                }
-
-                // 3. Só apaga origem se fan-out foi 100% bem-sucedido, backup OK e flag permite
-                if (fanOutOk && backupOk && config.FlExcluirOrigem)
-                {
-                    CleanupSource(file.FullName, filePath);
-                }
-
-                // 4. Grava log por destino (S ou E conforme resultado)
-                foreach (var (destDir, ok, erro) in destResults)
-                {
-                    await GravarLogArquivoAsync(
-                        cnLogProcesso, config, file.Name, sourceDirectory, destDir,
-                        file.Length, dtInicioArquivo, ok ? "S" : "E", erro, compressed, false, cancellationToken);
-                }
-
-                if (!fanOutOk || !backupOk) failed++;
-                else succeeded++;
-                if (!backupOk)
-                    errors.Add($"{file.Name}: falha no backup — origem preservada.");
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
+            if (fileSucceeded == true)
+                succeeded++;
+            else if (fileSucceeded == false)
                 failed++;
-                errors.Add($"{file.Name}: {ex.Message}");
-                _logger.LogError(ex, "Erro ao transferir '{File}'.", file.Name);
-                await GravarLogArquivoAsync(
-                    cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
-                    file.Length, dtInicioArquivo, "E", ex.Message, compressed, false, cancellationToken);
-            }
+
+            errors.AddRange(fileErrors);
         }
 
         PurgeBackupIfNeeded(config);
 
         return new FileTransferResult(files.Length, succeeded, failed, errors);
+    }
+
+    private void PrepareDiretories(IReadOnlyList<DestinoTransfer> destinos, TransferPath config)
+    {
+        foreach (var dest in destinos)
+        {
+            if (dest.Destino?.IdProtocolo == "SFTP")
+                continue;
+            try { Directory.CreateDirectory(dest.Diretorio); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de destino: '{Path}'.", dest.Diretorio); }
+        }
+        if (!string.IsNullOrWhiteSpace(config.DiretorioBackup))
+        {
+            try { Directory.CreateDirectory(config.DiretorioBackup); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Não foi possível criar diretório de backup: '{Path}'.", config.DiretorioBackup); }
+        }
+    }
+
+    private async Task<(bool? Succeeded, List<string> Errors)> ProcessFileAsync(
+        FileInfo file,
+        TransferPath config,
+        string sourceDirectory,
+        IReadOnlyList<DestinoTransfer> destinos,
+        bool overwriteExisting,
+        int timeoutCompactacaoMs,
+        int? cnLogProcesso,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+
+        if (!_maskMatcher.Match(file.Name, config.MascaraArq))
+            return (null, errors);
+
+        if (_lockChecker.IsFileLocked(file.FullName))
+        {
+            _logger.LogWarning("Arquivo em uso, ignorado: '{File}'.", file.Name);
+            await GravarLogArquivoAsync(
+                cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
+                file.Length, DateTime.UtcNow, "W", "Arquivo em uso (locked) — será tentado no próximo ciclo", false, false, cancellationToken);
+            return (null, errors);
+        }
+
+        if (!_sizeValidator.IsWithinRange(file.Length, config.TamanhoInicialArqBytes, config.TamanhoFinalArqBytes))
+        {
+            _logger.LogDebug("Arquivo fora da faixa de tamanho: '{File}' ({Size} bytes).", file.Name, file.Length);
+            return (null, errors);
+        }
+
+        var dtInicioArquivo = DateTime.UtcNow;
+        bool compressed = false;
+        try
+        {
+            var (filePath, fileName, wasCompressed) = await TryCompressAsync(file, config, sourceDirectory, timeoutCompactacaoMs, cancellationToken);
+            compressed = wasCompressed;
+
+            bool backupOk = CopyToBackup(filePath, fileName, config.DiretorioBackup, overwriteExisting);
+            var (fanOutOk, destResults) = await FanOutFileAsync(file, fileName, filePath, config, destinos, overwriteExisting, cancellationToken);
+
+            if (fanOutOk && backupOk && config.FlExcluirOrigem)
+                CleanupSource(file.FullName, filePath);
+
+            foreach (var (destDir, ok, erro) in destResults)
+            {
+                await GravarLogArquivoAsync(
+                    cnLogProcesso, config, file.Name, sourceDirectory, destDir,
+                    file.Length, dtInicioArquivo, ok ? "S" : "E", erro, compressed, false, cancellationToken);
+            }
+
+            if (!fanOutOk || !backupOk)
+            {
+                if (!backupOk)
+                    errors.Add($"{file.Name}: falha no backup — origem preservada.");
+                return (false, errors);
+            }
+
+            return (true, errors);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            errors.Add($"{file.Name}: {ex.Message}");
+            _logger.LogError(ex, "Erro ao transferir '{File}'.", file.Name);
+            await GravarLogArquivoAsync(
+                cnLogProcesso, config, file.Name, sourceDirectory, destinos.FirstOrDefault()?.Diretorio ?? "",
+                file.Length, dtInicioArquivo, "E", ex.Message, compressed, false, cancellationToken);
+            return (false, errors);
+        }
+    }
+
+    private async Task<(bool FanOutOk, List<(string Dir, bool Ok, string? Erro)> Results)> FanOutFileAsync(
+        FileInfo file,
+        string fileName,
+        string filePath,
+        TransferPath config,
+        IReadOnlyList<DestinoTransfer> destinos,
+        bool overwriteExisting,
+        CancellationToken cancellationToken)
+    {
+        bool fanOutOk = true;
+        var destResults = new List<(string Dir, bool Ok, string? Erro)>();
+        var resolvedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var dest in destinos)
+        {
+            try
+            {
+                var destFileName = AplicarRename(fileName, dest.PadraoRename);
+                if (destFileName.Contains("..") || destFileName.Contains('/') || destFileName.Contains('\\'))
+                {
+                    _logger.LogWarning("Rename pattern gerou nome inseguro: '{Name}'. Usando nome original.", destFileName);
+                    destFileName = fileName;
+                }
+
+                var destIdentity = dest.Destino?.IdProtocolo == "SFTP" ? $"SFTP:{dest.Destino?.CnRotaDestino}" : $"LOCAL:{dest.Diretorio}";
+                var destKey = $"{destIdentity}|{destFileName}";
+
+                if (!resolvedNames.Add(destKey))
+                {
+                    _logger.LogWarning("Colisão de nome no destino: '{Dir}/{Name}'. Arquivo ignorado para este destino.", dest.Diretorio, destFileName);
+                    destResults.Add((dest.Diretorio, false, $"Colisão de rename: {destFileName}"));
+                    fanOutOk = false;
+                    continue;
+                }
+
+                if (dest.Destino?.IdProtocolo == "SFTP")
+                {
+                    await TransferToSftpAsync(file, filePath, destFileName, dest, overwriteExisting, cancellationToken);
+                }
+                else
+                {
+                    CopyToDestination(filePath, destFileName, dest.Diretorio, overwriteExisting);
+                }
+
+                destResults.Add((dest.Diretorio, true, null));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Falha ao copiar '{File}' para '{Dest}'.", fileName, dest.Diretorio);
+                destResults.Add((dest.Diretorio, false, ex.Message));
+
+                if (dest.Destino?.IdProtocolo == "SFTP" && dest.Conexao != null)
+                {
+                    try
+                    {
+                        await _logSftpRepository.InserirAsync(new LogSftp
+                        {
+                            CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                            CnRotaDestino = dest.Destino.CnRotaDestino,
+                            IdTipo = "ERRO",
+                            IdStatus = "E",
+                            NmArquivo = file.Name,
+                            DsMensagem = ex.Message,
+                            DtEvento = DateTime.UtcNow
+                        }, cancellationToken);
+                    }
+                    catch { }
+                }
+
+                fanOutOk = false;
+            }
+        }
+
+        return (fanOutOk, destResults);
+    }
+
+    private async Task TransferToSftpAsync(
+        FileInfo file,
+        string filePath,
+        string destFileName,
+        DestinoTransfer dest,
+        bool overwriteExisting,
+        CancellationToken cancellationToken)
+    {
+        var remotePath = CombinePosixPath(dest.Diretorio, destFileName);
+        var transport = _transportFactory.Criar(dest.Destino!, dest.Conexao, _sftpPool);
+        var sw = Stopwatch.StartNew();
+        await transport.UploadFileAsync(filePath, remotePath, overwriteExisting, cancellationToken);
+        sw.Stop();
+
+        if (dest.Conexao != null)
+        {
+            try
+            {
+                await _logSftpRepository.InserirAsync(new LogSftp
+                {
+                    CnConexaoSftp = dest.Conexao.CnConexaoSftp,
+                    CnRotaDestino = dest.Destino!.CnRotaDestino,
+                    IdTipo = "UPLOAD",
+                    IdStatus = "S",
+                    NmArquivo = destFileName,
+                    NrTamanhoBytes = file.Length,
+                    NrDuracaoMs = (int)sw.ElapsedMilliseconds,
+                    DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
+                    DtEvento = DateTime.UtcNow
+                }, cancellationToken);
+            }
+            catch { }
+        }
     }
 
     private async Task<(string FilePath, string FileName, bool Compressed)> TryCompressAsync(

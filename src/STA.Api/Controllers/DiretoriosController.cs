@@ -33,7 +33,7 @@ public class DiretoriosController : ControllerBase
             }
             return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("inacessivel", "Caminho inacessível ou diretório pai não existe.", false)));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", "Erro ao processar diretório.", false)));
         }
@@ -59,7 +59,7 @@ public class DiretoriosController : ControllerBase
         {
             return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("sem_permissao", "Sem permissão para criar.", false)));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Ok(new ApiResponse<ValidacaoDiretorioResult>(true, new ValidacaoDiretorioResult("erro", "Erro ao processar diretório.", false)));
         }

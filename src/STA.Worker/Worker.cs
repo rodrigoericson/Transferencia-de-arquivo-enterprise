@@ -268,12 +268,10 @@ public class Worker : BackgroundService
         {
             _estado.SetEtapa(chain.Etapa);
 
-            // Estrutura da chain: nó 0 = origem (com backup opcional), nós 1+ = destinos (fan-out)
             if (chain.Nodes.Count < 2) continue;
 
             var origem = chain.Nodes[0];
 
-            // Buscar destinos com padrão de rename do banco
             var destinosTransfer = await BuscarDestinosComRenameAsync(origem.CnRota, chain.Nodes, stoppingToken);
 
             var result = await transferService.TransferFanOutAsync(
@@ -287,41 +285,52 @@ public class Worker : BackgroundService
 
             totals.Add(result);
 
-            // Limpa backups antigos (purge) baseado no primeiro nó (que tem a info de DiasExcluir)
             purgeService.PurgeNode(origem);
 
-            // Retorno SFTP: baixa arquivos do parceiro para pasta local (respeitando horários)
-            if (origem.FlHabilitarRetorno && origem.CnConexaoSftpRetorno.HasValue)
-            {
-                try
-                {
-                    var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, stoppingToken);
-                    if (conexaoRetorno != null)
-                    {
-                        var now = DateTime.Now;
-                        if (!STA.Core.Services.SftpSchedulerHelper.IsDiaHabilitado(conexaoRetorno.DsDiasSemana, now))
-                            continue;
-                        var horarioAtivo = STA.Core.Services.SftpSchedulerHelper.GetHorarioAtivo(
-                            conexaoRetorno.DsHorariosExecucao, now, conexaoRetorno.NrToleranciaMinutos);
-                        if (horarioAtivo == null)
-                            continue;
-
-                        var isUltimoHorario = STA.Core.Services.SftpSchedulerHelper.IsUltimoHorarioDoDia(
-                            conexaoRetorno.DsHorariosExecucao, horarioAtivo);
-
-                        var retResult = await returnDownloader.ProcessarRetornoAsync(origem, conexaoRetorno, sftpPool, cnLogProcesso, isUltimoHorario, stoppingToken);
-                        totals.Add(retResult);
-                    }
-                }
-                catch (OperationCanceledException) { throw; }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Falha ao processar retorno SFTP da rota '{Rota}'.", origem.CnRota);
-                }
-            }
+            var retResult = await ProcessarRetornoSftpAsync(origem, returnDownloader, sftpPool, cnLogProcesso, stoppingToken);
+            if (retResult != null)
+                totals.Add(retResult);
         }
 
         return totals;
+    }
+
+    private async Task<FileTransferResult?> ProcessarRetornoSftpAsync(
+        STA.Core.Models.TransferPath origem,
+        STA.Core.Services.IReturnDownloadService returnDownloader,
+        STA.Core.Services.Transports.SftpConnectionPool sftpPool,
+        int? cnLogProcesso,
+        CancellationToken stoppingToken)
+    {
+        if (!origem.FlHabilitarRetorno || !origem.CnConexaoSftpRetorno.HasValue)
+            return null;
+
+        try
+        {
+            var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, stoppingToken);
+            if (conexaoRetorno == null)
+                return null;
+
+            var now = DateTime.Now;
+            if (!STA.Core.Services.SftpSchedulerHelper.IsDiaHabilitado(conexaoRetorno.DsDiasSemana, now))
+                return null;
+
+            var horarioAtivo = STA.Core.Services.SftpSchedulerHelper.GetHorarioAtivo(
+                conexaoRetorno.DsHorariosExecucao, now, conexaoRetorno.NrToleranciaMinutos);
+            if (horarioAtivo == null)
+                return null;
+
+            var isUltimoHorario = STA.Core.Services.SftpSchedulerHelper.IsUltimoHorarioDoDia(
+                conexaoRetorno.DsHorariosExecucao, horarioAtivo);
+
+            return await returnDownloader.ProcessarRetornoAsync(origem, conexaoRetorno, sftpPool, cnLogProcesso, isUltimoHorario, stoppingToken);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao processar retorno SFTP da rota '{Rota}'.", origem.CnRota);
+            return null;
+        }
     }
 
     private async Task FecharLogCicloAsync(

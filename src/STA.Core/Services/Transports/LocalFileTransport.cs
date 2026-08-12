@@ -5,12 +5,10 @@ namespace STA.Core.Services.Transports;
 public class LocalFileTransport : IDestinationTransport
 {
     private readonly bool _overwriteDefault;
-    private readonly ILogger<LocalFileTransport> _logger;
 
     public LocalFileTransport(bool overwriteDefault, ILogger<LocalFileTransport> logger)
     {
         _overwriteDefault = overwriteDefault;
-        _logger = logger;
     }
 
     public Task UploadFileAsync(string sourceFilePath, string remotePath, bool overwrite, CancellationToken ct = default)

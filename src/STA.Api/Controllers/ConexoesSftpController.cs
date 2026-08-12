@@ -225,7 +225,7 @@ public class ConexoesSftpController : ControllerBase
             return Ok(new ApiResponse<TestarConexaoResultDto>(true,
                 new TestarConexaoResultDto(false, "Não foi possível estabelecer conexão.")));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Ok(new ApiResponse<TestarConexaoResultDto>(true,
                 new TestarConexaoResultDto(false, "Falha ao conectar. Verifique host, porta, credenciais e conectividade.")));
@@ -269,7 +269,7 @@ public class ConexoesSftpController : ControllerBase
             return Ok(new ApiResponse<TestarConexaoResultDto>(true,
                 new TestarConexaoResultDto(false, "Não foi possível estabelecer conexão.")));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             sw.Stop();
             try

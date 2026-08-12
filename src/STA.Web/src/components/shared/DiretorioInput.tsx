@@ -9,6 +9,28 @@ interface Props {
   onValidar?: () => void;
 }
 
+function getBorderColor(validacao?: Props['validacao']) {
+  if (!validacao || validacao.status === 'idle') return 'border-gray-700';
+  if (validacao.status === 'validando') return 'border-blue-500';
+  if (validacao.ok) return 'border-green-500';
+  if (validacao.status === 'nao_existe') return 'border-yellow-500';
+  return 'border-red-500';
+}
+
+function getIcon(validacao?: Props['validacao']) {
+  if (!validacao || validacao.status === 'idle') return null;
+  if (validacao.status === 'validando') return <span className="text-blue-400 text-xs">⟳</span>;
+  if (validacao.ok) return <span className="text-green-400 text-sm">✓</span>;
+  if (validacao.status === 'nao_existe') return <span className="text-yellow-400 text-sm">!</span>;
+  return <span className="text-red-400 text-sm">✗</span>;
+}
+
+function getMensagemColor(validacao: Props['validacao']) {
+  if (validacao?.ok) return 'text-green-500';
+  if (validacao?.status === 'nao_existe') return 'text-yellow-400';
+  return 'text-red-400';
+}
+
 export default function DiretorioInput({ value, onChange, placeholder, validacao, onValidar }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -19,17 +41,8 @@ export default function DiretorioInput({ value, onChange, placeholder, validacao
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [value]);
 
-  const borderColor = !validacao || validacao.status === 'idle' ? 'border-gray-700'
-    : validacao.status === 'validando' ? 'border-blue-500'
-    : validacao.ok ? 'border-green-500'
-    : validacao.status === 'nao_existe' ? 'border-yellow-500'
-    : 'border-red-500';
-
-  const icon = !validacao || validacao.status === 'idle' ? null
-    : validacao.status === 'validando' ? <span className="text-blue-400 text-xs">⟳</span>
-    : validacao.ok ? <span className="text-green-400 text-sm">✓</span>
-    : validacao.status === 'nao_existe' ? <span className="text-yellow-400 text-sm">!</span>
-    : <span className="text-red-400 text-sm">✗</span>;
+  const borderColor = getBorderColor(validacao);
+  const icon = getIcon(validacao);
 
   const handleCriar = async () => {
     try {
@@ -53,11 +66,7 @@ export default function DiretorioInput({ value, onChange, placeholder, validacao
       </div>
       {validacao && validacao.status !== 'idle' && validacao.status !== 'validando' && (
         <div className="flex items-center gap-2 mt-1">
-          <p className={`text-xs ${
-            validacao.ok ? 'text-green-500' :
-            validacao.status === 'nao_existe' ? 'text-yellow-400' :
-            'text-red-400'
-          }`}>
+          <p className={`text-xs ${getMensagemColor(validacao)}`}>
             {validacao.mensagem}
           </p>
           {validacao.status === 'nao_existe' && (

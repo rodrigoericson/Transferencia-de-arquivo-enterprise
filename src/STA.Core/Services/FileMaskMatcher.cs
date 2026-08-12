@@ -39,12 +39,20 @@ public class FileMaskMatcher : IFileMaskMatcher
         var maskExt = maskParts.Length > 1 ? maskParts[^1] : "";
         var fileExt = fileParts.Length > 1 ? fileParts[^1] : "";
 
-        if (maskExt != "*" && !maskExt.Equals(fileExt, StringComparison.OrdinalIgnoreCase))
+        if (!MatchExtension(maskExt, fileExt))
             return false;
 
         var maskName = string.Join('.', maskParts.Take(maskParts.Length - 1));
         var fileName = string.Join('.', fileParts.Take(fileParts.Length - 1));
 
+        return MatchName(maskName, fileName);
+    }
+
+    private static bool MatchExtension(string maskExt, string fileExt)
+        => maskExt == "*" || maskExt.Equals(fileExt, StringComparison.OrdinalIgnoreCase);
+
+    private static bool MatchName(string maskName, string fileName)
+    {
         if (string.IsNullOrEmpty(maskName) || maskName == "*")
             return true;
 

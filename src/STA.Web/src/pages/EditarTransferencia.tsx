@@ -89,60 +89,68 @@ export default function EditarTransferencia() {
     setDestinos(copy);
   };
 
+  const validateFormData = (): string | null => {
+    if (!nome.trim()) return 'Nome é obrigatório.';
+    if (!origem.trim()) return 'Origem é obrigatória.';
+    if (destinos.filter(d => d.dir.trim()).length === 0) return 'Adicione pelo menos um destino.';
+    if (retornoConfig.flHabilitarRetorno) {
+      if (!retornoConfig.cnConexaoSftpRetorno) return 'Selecione uma conexão SFTP para o retorno.';
+      if (!retornoConfig.dsDiretorioRetorno?.trim()) return 'Informe a pasta remota de retorno.';
+      if (!retornoConfig.dsDiretorioLocalRetorno?.trim()) return 'Informe a pasta local de recebimento.';
+    }
+    return null;
+  };
+
+  const updateEtapa = async () => {
+    await api.put(`/etapas/${etapaId}`, {
+      nmEtapa: nome,
+      nrOrdemExecucao: 1,
+      flAtivo,
+    });
+  };
+
+  const updateRota = async () => {
+    if (!cnRota) return;
+    await api.put(`/rotas/${cnRota}`, {
+      nrOrdem: 1,
+      dsDiretorioOrigem: origem.trim(),
+      dsDiretorioBackup: backup.trim() || null,
+      dsMascaraArquivo: mascara.trim() || '*',
+      dsCompactaOrigemTipo: compactar ? '7Z' : null,
+      nrDiasExcluir: retencao,
+      flAtivo: true,
+      ...retornoConfig,
+    });
+  };
+
+  const updateDestinos = async () => {
+    if (!cnRota) return;
+    for (const id of destinoIds) {
+      if (id) await api.delete(`/destinos/${id}`);
+    }
+    const destinosValidos = destinos.filter(d => d.dir.trim());
+    for (let i = 0; i < destinosValidos.length; i++) {
+      await api.post('/destinos', {
+        cnRota,
+        nrOrdem: i + 1,
+        dsDiretorioDestino: destinosValidos[i].dir.trim(),
+        dsPadraoRename: destinosValidos[i].rename.trim() || null,
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!nome.trim()) { setError('Nome é obrigatório.'); return; }
-    if (!origem.trim()) { setError('Origem é obrigatória.'); return; }
-    if (destinos.filter(d => d.dir.trim()).length === 0) { setError('Adicione pelo menos um destino.'); return; }
-    if (retornoConfig.flHabilitarRetorno) {
-      if (!retornoConfig.cnConexaoSftpRetorno) { setError('Selecione uma conexão SFTP para o retorno.'); return; }
-      if (!retornoConfig.dsDiretorioRetorno?.trim()) { setError('Informe a pasta remota de retorno.'); return; }
-      if (!retornoConfig.dsDiretorioLocalRetorno?.trim()) { setError('Informe a pasta local de recebimento.'); return; }
-    }
+    const validationError = validateFormData();
+    if (validationError) { setError(validationError); return; }
 
     setSaving(true);
     try {
-      // 1. Atualizar etapa
-      await api.put(`/etapas/${etapaId}`, {
-        nmEtapa: nome,
-        nrOrdemExecucao: 1,
-        flAtivo,
-      });
-
-      // 2. Atualizar rota
-      if (cnRota) {
-        await api.put(`/rotas/${cnRota}`, {
-          nrOrdem: 1,
-          dsDiretorioOrigem: origem.trim(),
-          dsDiretorioBackup: backup.trim() || null,
-          dsMascaraArquivo: mascara.trim() || '*',
-          dsCompactaOrigemTipo: compactar ? '7Z' : null,
-          nrDiasExcluir: retencao,
-          flAtivo: true,
-          ...retornoConfig,
-        });
-      }
-
-      // 3. Atualizar destinos (delete existentes + recriar)
-      if (cnRota) {
-        // Deletar destinos antigos
-        for (const id of destinoIds) {
-          if (id) await api.delete(`/destinos/${id}`);
-        }
-        // Criar novos
-        const destinosValidos = destinos.filter(d => d.dir.trim());
-        for (let i = 0; i < destinosValidos.length; i++) {
-          await api.post('/destinos', {
-            cnRota,
-            nrOrdem: i + 1,
-            dsDiretorioDestino: destinosValidos[i].dir.trim(),
-            dsPadraoRename: destinosValidos[i].rename.trim() || null,
-          });
-        }
-      }
-
+      await updateEtapa();
+      await updateRota();
+      await updateDestinos();
       alert('Transferência salva com sucesso!');
       navigate('/etapas');
     } catch (err: unknown) {
