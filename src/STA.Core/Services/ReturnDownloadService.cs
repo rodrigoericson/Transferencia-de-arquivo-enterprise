@@ -28,7 +28,6 @@ public class ReturnDownloadService : IReturnDownloadService
         IFileMaskMatcher maskMatcher,
         IFileLockChecker lockChecker,
         ILogSftpRepository logSftpRepository,
-        ILogArquivoRepository logArquivoRepository,
         ILogger<ReturnDownloadService> logger)
     {
         _maskMatcher = maskMatcher;

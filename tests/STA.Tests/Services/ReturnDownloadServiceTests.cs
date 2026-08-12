@@ -14,7 +14,6 @@ public class ReturnDownloadServiceTests
     private readonly Mock<IFileMaskMatcher> _maskMock = new();
     private readonly Mock<IFileLockChecker> _lockMock = new();
     private readonly Mock<ILogSftpRepository> _logSftpMock = new();
-    private readonly Mock<ILogArquivoRepository> _logArqMock = new();
     private readonly Mock<ISftpClientWrapper> _clientMock = new();
     private readonly Mock<ISftpClientFactory> _factoryMock = new();
     private readonly Mock<ICredencialProtector> _protectorMock = new();
@@ -26,7 +25,6 @@ public class ReturnDownloadServiceTests
             _maskMock.Object,
             _lockMock.Object,
             _logSftpMock.Object,
-            _logArqMock.Object,
             Mock.Of<ILogger<ReturnDownloadService>>());
     }
 
