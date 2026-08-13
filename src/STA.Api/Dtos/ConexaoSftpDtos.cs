@@ -17,7 +17,15 @@ public record ConexaoSftpDto(
     bool FlAtivo,
     DateTime DtCriacao,
     DateTime? DtUltimoUso
-);
+)
+{
+    public static ConexaoSftpDto FromEntity(STA.Core.Data.Entities.ConexaoSftp c) => new(
+        c.CnConexaoSftp, c.NmConexao, c.DsHost, c.NrPorta, c.DsUsuario,
+        c.DsSenhaCriptografada != null,
+        c.DsCaminhoChavePrivada != null, c.DsHorariosExecucao, c.DsDiasSemana,
+        c.FlArquivoObrigatorio, c.NrToleranciaMinutos, c.FlAtivo,
+        c.DtCriacao, c.DtUltimoUso);
+}
 
 public record CreateConexaoSftpDto(
     [Required][StringLength(100)] string NmConexao,

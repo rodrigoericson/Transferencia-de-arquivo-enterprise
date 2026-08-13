@@ -133,8 +133,7 @@ public class Worker : BackgroundService
             scope.ServiceProvider.GetRequiredService<STA.Core.Services.Transports.ICredencialProtector>(),
             scope.ServiceProvider.GetRequiredService<ILogger<STA.Core.Services.Transports.SftpConnectionPool>>(),
             scope.ServiceProvider.GetRequiredService<STA.Core.Data.Repositories.ILogSftpRepository>());
-        if (transferService is STA.Core.Services.FileTransferService fts)
-            fts.SetSftpPool(sftpPool);
+        transferService.SetSftpPool(sftpPool);
         var returnDownloader = scope.ServiceProvider.GetRequiredService<STA.Core.Services.IReturnDownloadService>();
         var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
 
@@ -158,11 +157,14 @@ public class Worker : BackgroundService
 
         _estado.IniciarCiclo();
 
+        // Cache de ConexaoSftp por ciclo — evita FindAsync repetido para a mesma CnConexaoSftp
+        var conexaoCache = new Dictionary<int, STA.Core.Data.Entities.ConexaoSftp?>();
+
         var totals = new CicloTotals();
         bool cycleFailed = false;
         try
         {
-            totals = await ProcessarChainsAsync(chains, transferService, purgeService, returnDownloader, sftpPool, settings, cnLogProcesso, stoppingToken);
+            totals = await ProcessarChainsAsync(chains, transferService, purgeService, returnDownloader, sftpPool, settings, cnLogProcesso, conexaoCache, stoppingToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -261,6 +263,7 @@ public class Worker : BackgroundService
         STA.Core.Services.Transports.SftpConnectionPool sftpPool,
         StaSettings settings,
         int? cnLogProcesso,
+        Dictionary<int, STA.Core.Data.Entities.ConexaoSftp?> conexaoCache,
         CancellationToken stoppingToken)
     {
         var totals = new CicloTotals();
@@ -288,7 +291,7 @@ public class Worker : BackgroundService
 
             purgeService.PurgeNode(origem);
 
-            var retResult = await ProcessarRetornoSftpAsync(origem, returnDownloader, sftpPool, cnLogProcesso, stoppingToken);
+            var retResult = await ProcessarRetornoSftpAsync(origem, returnDownloader, sftpPool, cnLogProcesso, conexaoCache, stoppingToken);
             if (retResult != null)
                 totals.Add(retResult);
         }
@@ -301,6 +304,7 @@ public class Worker : BackgroundService
         STA.Core.Services.IReturnDownloadService returnDownloader,
         STA.Core.Services.Transports.SftpConnectionPool sftpPool,
         int? cnLogProcesso,
+        Dictionary<int, STA.Core.Data.Entities.ConexaoSftp?> conexaoCache,
         CancellationToken stoppingToken)
     {
         if (!origem.FlHabilitarRetorno || !origem.CnConexaoSftpRetorno.HasValue)
@@ -308,7 +312,7 @@ public class Worker : BackgroundService
 
         try
         {
-            var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, stoppingToken);
+            var conexaoRetorno = await BuscarConexaoSftpAsync(origem.CnConexaoSftpRetorno.Value, conexaoCache, stoppingToken);
             if (conexaoRetorno == null)
                 return null;
 
@@ -446,19 +450,29 @@ public class Worker : BackgroundService
         }
     }
 
-    private async Task<STA.Core.Data.Entities.ConexaoSftp?> BuscarConexaoSftpAsync(int cnConexaoSftp, CancellationToken ct)
+    private async Task<STA.Core.Data.Entities.ConexaoSftp?> BuscarConexaoSftpAsync(
+        int cnConexaoSftp,
+        Dictionary<int, STA.Core.Data.Entities.ConexaoSftp?> conexaoCache,
+        CancellationToken ct)
     {
+        if (conexaoCache.TryGetValue(cnConexaoSftp, out var cached))
+            return cached;
+
+        STA.Core.Data.Entities.ConexaoSftp? result = null;
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<STA.Core.Data.StaDbContext>();
-            return await context.ConexoesSftp.FindAsync([cnConexaoSftp], ct);
+            result = await context.ConexoesSftp.FindAsync([cnConexaoSftp], ct);
         }
         catch (OperationCanceledException) { throw; }
         catch
         {
-            return null;
+            result = null;
         }
+
+        conexaoCache[cnConexaoSftp] = result;
+        return result;
     }
 
     private async Task<IReadOnlyList<STA.Core.Services.DestinoTransfer>> BuscarDestinosComRenameAsync(

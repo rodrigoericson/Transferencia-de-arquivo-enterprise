@@ -25,6 +25,8 @@ public interface IFileTransferService
         int timeoutCompactacaoMs,
         int? cnLogProcesso,
         CancellationToken cancellationToken);
+
+    void SetSftpPool(Transports.SftpConnectionPool? pool);
 }
 
 public class FileTransferService : IFileTransferService
@@ -215,7 +217,7 @@ public class FileTransferService : IFileTransferService
             try
             {
                 var destFileName = AplicarRename(fileName, dest.PadraoRename);
-                if (destFileName.Contains("..") || destFileName.Contains('/') || destFileName.Contains('\\'))
+                if (!PathSafety.IsFileNameSafe(destFileName))
                 {
                     _logger.LogWarning("Rename pattern gerou nome inseguro: '{Name}'. Usando nome original.", destFileName);
                     destFileName = fileName;
@@ -250,20 +252,9 @@ public class FileTransferService : IFileTransferService
 
                 if (dest.Destino?.IdProtocolo == "SFTP" && dest.Conexao != null)
                 {
-                    try
-                    {
-                        await _logSftpRepository.InserirAsync(new LogSftp
-                        {
-                            CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                            CnRotaDestino = dest.Destino.CnRotaDestino,
-                            IdTipo = "ERRO",
-                            IdStatus = "E",
-                            NmArquivo = file.Name,
-                            DsMensagem = ex.Message,
-                            DtEvento = DateTime.UtcNow
-                        }, cancellationToken);
-                    }
-                    catch { }
+                    _sftpPool?.EnqueueSftpLog(
+                        dest.Conexao.CnConexaoSftp, dest.Destino.CnRotaDestino,
+                        "ERRO", "E", file.Name, null, null, ex.Message);
                 }
 
                 fanOutOk = false;
@@ -289,22 +280,10 @@ public class FileTransferService : IFileTransferService
 
         if (dest.Conexao != null)
         {
-            try
-            {
-                await _logSftpRepository.InserirAsync(new LogSftp
-                {
-                    CnConexaoSftp = dest.Conexao.CnConexaoSftp,
-                    CnRotaDestino = dest.Destino!.CnRotaDestino,
-                    IdTipo = "UPLOAD",
-                    IdStatus = "S",
-                    NmArquivo = destFileName,
-                    NrTamanhoBytes = file.Length,
-                    NrDuracaoMs = (int)sw.ElapsedMilliseconds,
-                    DsMensagem = $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}",
-                    DtEvento = DateTime.UtcNow
-                }, cancellationToken);
-            }
-            catch { }
+            _sftpPool?.EnqueueSftpLog(
+                dest.Conexao.CnConexaoSftp, dest.Destino!.CnRotaDestino,
+                "UPLOAD", "S", destFileName, file.Length, (int)sw.ElapsedMilliseconds,
+                $"{dest.Conexao.DsHost}:{dest.Conexao.NrPorta}{remotePath}");
         }
     }
 

@@ -37,37 +37,47 @@ public class SftpConnectionPool : IDisposable, IAsyncDisposable
                 if (existing.IsConnected)
                     return existing;
 
-                _logger.LogWarning("Conexao SFTP '{Nome}' perdida. Reconectando...", conexao.NmConexao);
+                // Dead connection - remove and continue to create new one
                 EnqueueLog(conexao, "W", "Conexão perdida — reconectando");
-                try { existing.Dispose(); }
-                catch (Exception exDispose) { _logger.LogDebug(exDispose, "Erro ao dispose conexão SFTP anterior."); }
+                try { existing.Dispose(); } catch (Exception exDispose) { _logger.LogDebug(exDispose, "Erro ao dispose conexão SFTP anterior."); }
                 _pool.Remove(conexao.CnConexaoSftp);
             }
+        }
 
-            var sw = Stopwatch.StartNew();
-            ISftpClientWrapper? client = null;
-            try
+        // Connect OUTSIDE the lock (slow I/O)
+        var sw = Stopwatch.StartNew();
+        ISftpClientWrapper? client = null;
+        try
+        {
+            client = _factory.Criar(conexao, _protector);
+            client.Connect();
+            sw.Stop();
+
+            lock (_poolLock)
             {
-                client = _factory.Criar(conexao, _protector);
-                client.Connect();
-                sw.Stop();
+                // Another thread might have connected while we were connecting
+                if (_pool.TryGetValue(conexao.CnConexaoSftp, out var raced) && raced.IsConnected)
+                {
+                    try { client.Dispose(); } catch { }
+                    return raced;
+                }
                 _pool[conexao.CnConexaoSftp] = client;
-
-                _logger.LogInformation("Conexao SFTP '{Nome}' ({Host}:{Porta}) aberta em {Ms}ms.",
-                    conexao.NmConexao, conexao.DsHost, conexao.NrPorta, sw.ElapsedMilliseconds);
-                EnqueueLog(conexao, "S", $"Conectado em {sw.ElapsedMilliseconds}ms — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})", (int)sw.ElapsedMilliseconds);
-
-                return client;
             }
-            catch (Exception ex)
-            {
-                sw.Stop();
-                try { client?.Dispose(); } catch { }
-                _logger.LogError(ex, "Falha ao conectar SFTP '{Nome}' ({Host}:{Porta}).",
-                    conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
-                EnqueueLog(conexao, "E", $"Falha de conexão: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario}, tentativa: {sw.ElapsedMilliseconds}ms)", (int)sw.ElapsedMilliseconds);
-                throw;
-            }
+
+            _logger.LogInformation("Conexao SFTP '{Nome}' ({Host}:{Porta}) aberta em {Ms}ms.",
+                conexao.NmConexao, conexao.DsHost, conexao.NrPorta, sw.ElapsedMilliseconds);
+            EnqueueLog(conexao, "S", $"Conectado em {sw.ElapsedMilliseconds}ms — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario})", (int)sw.ElapsedMilliseconds);
+
+            return client;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            try { client?.Dispose(); } catch { }
+            _logger.LogError(ex, "Falha ao conectar SFTP '{Nome}' ({Host}:{Porta}).",
+                conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
+            EnqueueLog(conexao, "E", $"Falha de conexão: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario}, tentativa: {sw.ElapsedMilliseconds}ms)", (int)sw.ElapsedMilliseconds);
+            throw;
         }
     }
 
@@ -78,6 +88,22 @@ public class SftpConnectionPool : IDisposable, IAsyncDisposable
             CnConexaoSftp = conexao.CnConexaoSftp,
             IdTipo = "CONEXAO",
             IdStatus = status,
+            NrDuracaoMs = duracaoMs,
+            DsMensagem = mensagem,
+            DtEvento = DateTime.UtcNow
+        });
+    }
+
+    public void EnqueueSftpLog(int cnConexaoSftp, int? cnRotaDestino, string idTipo, string idStatus, string? nmArquivo, long? tamanhoBytes, int? duracaoMs, string? mensagem)
+    {
+        _pendingLogs.Enqueue(new LogSftp
+        {
+            CnConexaoSftp = cnConexaoSftp,
+            CnRotaDestino = cnRotaDestino,
+            IdTipo = idTipo,
+            IdStatus = idStatus,
+            NmArquivo = nmArquivo,
+            NrTamanhoBytes = tamanhoBytes,
             NrDuracaoMs = duracaoMs,
             DsMensagem = mensagem,
             DtEvento = DateTime.UtcNow

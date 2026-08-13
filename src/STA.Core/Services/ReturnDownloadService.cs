@@ -189,7 +189,7 @@ public class ReturnDownloadService : IReturnDownloadService
     }
 
     private static bool IsFileNameSafe(string fileName)
-        => !fileName.Contains("..") && !fileName.Contains('/') && !fileName.Contains('\\') && !Path.IsPathRooted(fileName);
+        => PathSafety.IsFileNameSafe(fileName);
 
     private bool IsLocalFileLocked(string path)
         => File.Exists(path) && _lockChecker.IsFileLocked(path);

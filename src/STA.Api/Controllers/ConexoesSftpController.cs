@@ -56,12 +56,7 @@ public class ConexoesSftpController : ControllerBase
             .OrderBy(c => c.NmConexao)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new ConexaoSftpDto(
-                c.CnConexaoSftp, c.NmConexao, c.DsHost, c.NrPorta, c.DsUsuario,
-                c.DsSenhaCriptografada != null,
-                c.DsCaminhoChavePrivada != null, c.DsHorariosExecucao, c.DsDiasSemana,
-                c.FlArquivoObrigatorio, c.NrToleranciaMinutos, c.FlAtivo,
-                c.DtCriacao, c.DtUltimoUso))
+            .Select(c => ConexaoSftpDto.FromEntity(c))
             .ToListAsync(ct);
 
         var result = new PaginatedResponse<ConexaoSftpDto>(items, total, page, pageSize);
@@ -77,12 +72,7 @@ public class ConexoesSftpController : ControllerBase
         if (c is null)
             return NotFound(new ApiResponse<ConexaoSftpDto>(false, null, "Conexão SFTP não encontrada."));
 
-        var dto = new ConexaoSftpDto(
-            c.CnConexaoSftp, c.NmConexao, c.DsHost, c.NrPorta, c.DsUsuario,
-            c.DsSenhaCriptografada != null,
-            c.DsCaminhoChavePrivada != null, c.DsHorariosExecucao, c.DsDiasSemana,
-            c.FlArquivoObrigatorio, c.NrToleranciaMinutos, c.FlAtivo,
-            c.DtCriacao, c.DtUltimoUso);
+        var dto = ConexaoSftpDto.FromEntity(c);
 
         return Ok(new ApiResponse<ConexaoSftpDto>(true, dto));
     }
@@ -122,12 +112,7 @@ public class ConexoesSftpController : ControllerBase
         await _context.SaveChangesAsync(ct);
         await _audit.RegistrarAsync("CONEXAO_SFTP", conexao.CnConexaoSftp, "CREATE", conexao.NmConexao, ct);
 
-        var result = new ConexaoSftpDto(
-            conexao.CnConexaoSftp, conexao.NmConexao, conexao.DsHost, conexao.NrPorta, conexao.DsUsuario,
-            conexao.DsSenhaCriptografada != null,
-            conexao.DsCaminhoChavePrivada != null, conexao.DsHorariosExecucao, conexao.DsDiasSemana,
-            conexao.FlArquivoObrigatorio, conexao.NrToleranciaMinutos, conexao.FlAtivo,
-            conexao.DtCriacao, conexao.DtUltimoUso);
+        var result = ConexaoSftpDto.FromEntity(conexao);
 
         return CreatedAtAction(nameof(GetById), new { id = conexao.CnConexaoSftp }, new ApiResponse<ConexaoSftpDto>(true, result));
     }
@@ -163,12 +148,7 @@ public class ConexoesSftpController : ControllerBase
         await _context.SaveChangesAsync(ct);
         await _audit.RegistrarAsync("CONEXAO_SFTP", conexao.CnConexaoSftp, "UPDATE", conexao.NmConexao, ct);
 
-        var result = new ConexaoSftpDto(
-            conexao.CnConexaoSftp, conexao.NmConexao, conexao.DsHost, conexao.NrPorta, conexao.DsUsuario,
-            conexao.DsSenhaCriptografada != null,
-            conexao.DsCaminhoChavePrivada != null, conexao.DsHorariosExecucao, conexao.DsDiasSemana,
-            conexao.FlArquivoObrigatorio, conexao.NrToleranciaMinutos, conexao.FlAtivo,
-            conexao.DtCriacao, conexao.DtUltimoUso);
+        var result = ConexaoSftpDto.FromEntity(conexao);
 
         return Ok(new ApiResponse<ConexaoSftpDto>(true, result));
     }
@@ -293,25 +273,11 @@ public class ConexoesSftpController : ControllerBase
 
     [Authorize(Roles = "Admin,Operator")]
     [HttpGet("{id:int}/browse")]
-    public async Task<ActionResult<ApiResponse<BrowseSftpResultDto>>> Browse(int id, [FromQuery] string? path = "/", CancellationToken ct = default)
-    {
-        var conexao = await _context.ConexoesSftp.FindAsync([id], ct);
-        if (conexao is null)
-            return NotFound(new ApiResponse<BrowseSftpResultDto>(false, null, "Conexão SFTP não encontrada."));
-
-        if (!SftpPathValidator.TryNormalize(path, out var normalizedPath, out var erroPath))
-            return BadRequest(new ApiResponse<BrowseSftpResultDto>(false, null, erroPath));
-
-        try
+    public Task<ActionResult<ApiResponse<BrowseSftpResultDto>>> Browse(int id, [FromQuery] string? path = "/", CancellationToken ct = default)
+        => ExecuteSftpAsync<BrowseSftpResultDto>(id, (client, normalizedPath) =>
         {
-            using var client = _sftpFactory.Criar(conexao, _protector);
-            client.Connect();
-
             if (!client.DirectoryExists(normalizedPath))
-            {
-                client.Disconnect();
-                return Ok(new ApiResponse<BrowseSftpResultDto>(false, null, $"Diretório remoto não encontrado: {normalizedPath}"));
-            }
+                return new ApiResponse<BrowseSftpResultDto>(false, null, $"Diretório remoto não encontrado: {normalizedPath}");
 
             var entries = client.ListDirectoryDetailed(normalizedPath)
                 .OrderByDescending(e => e.IsDirectory)
@@ -324,48 +290,49 @@ public class ConexoesSftpController : ControllerBase
                     e.LastModifiedUtc))
                 .ToList();
 
-            client.Disconnect();
-
             var result = new BrowseSftpResultDto(normalizedPath, entries);
-            return Ok(new ApiResponse<BrowseSftpResultDto>(true, result));
-        }
-        catch (OperationCanceledException) { throw; }
-        catch
-        {
-            return Ok(new ApiResponse<BrowseSftpResultDto>(false, null, "Erro ao listar diretório remoto. Verifique caminho, permissões e conectividade SFTP."));
-        }
-    }
+            return new ApiResponse<BrowseSftpResultDto>(true, result);
+        }, path, ct);
 
     [Authorize(Roles = "Admin,Operator")]
     [HttpGet("{id:int}/validar-diretorio")]
-    public async Task<ActionResult<ApiResponse<ValidarDiretorioSftpResultDto>>> ValidarDiretorio(int id, [FromQuery] string? path = "/", CancellationToken ct = default)
+    public Task<ActionResult<ApiResponse<ValidarDiretorioSftpResultDto>>> ValidarDiretorio(int id, [FromQuery] string? path = "/", CancellationToken ct = default)
+        => ExecuteSftpAsync<ValidarDiretorioSftpResultDto>(id, (client, normalizedPath) =>
+        {
+            var exists = client.DirectoryExists(normalizedPath);
+            var mensagem = exists
+                ? "Diretório remoto encontrado."
+                : $"Diretório remoto não encontrado: {normalizedPath}";
+
+            return new ApiResponse<ValidarDiretorioSftpResultDto>(true,
+                new ValidarDiretorioSftpResultDto(exists, mensagem));
+        }, path, ct);
+
+    private async Task<ActionResult<ApiResponse<T>>> ExecuteSftpAsync<T>(
+        int id,
+        Func<ISftpClientWrapper, string, ApiResponse<T>> action,
+        string path = "/",
+        CancellationToken ct = default)
     {
         var conexao = await _context.ConexoesSftp.FindAsync([id], ct);
         if (conexao is null)
-            return NotFound(new ApiResponse<ValidarDiretorioSftpResultDto>(false, null, "Conexão SFTP não encontrada."));
+            return NotFound(new ApiResponse<T>(false, default, "Conexão SFTP não encontrada."));
 
         if (!SftpPathValidator.TryNormalize(path, out var normalizedPath, out var erroPath))
-            return BadRequest(new ApiResponse<ValidarDiretorioSftpResultDto>(false, null, erroPath));
+            return BadRequest(new ApiResponse<T>(false, default, erroPath));
 
         try
         {
             using var client = _sftpFactory.Criar(conexao, _protector);
             client.Connect();
-            var exists = client.DirectoryExists(normalizedPath);
+            var response = action(client, normalizedPath);
             client.Disconnect();
-
-            var mensagem = exists
-                ? "Diretório remoto encontrado."
-                : $"Diretório remoto não encontrado: {normalizedPath}";
-
-            return Ok(new ApiResponse<ValidarDiretorioSftpResultDto>(true,
-                new ValidarDiretorioSftpResultDto(exists, mensagem)));
+            return Ok(response);
         }
         catch (OperationCanceledException) { throw; }
         catch
         {
-            return Ok(new ApiResponse<ValidarDiretorioSftpResultDto>(true,
-                new ValidarDiretorioSftpResultDto(false, "Erro ao verificar diretório remoto. Verifique caminho, permissões e conectividade SFTP.")));
+            return Ok(new ApiResponse<T>(false, default, "Erro ao executar operação SFTP. Verifique caminho, permissões e conectividade."));
         }
     }
 
