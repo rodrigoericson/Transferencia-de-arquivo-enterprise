@@ -87,7 +87,7 @@ export default function NovaTransferencia() {
       <div className="max-w-2xl mx-auto p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-mono text-green-400">Nova Transferência</h1>
-          <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+          <button type="button" onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,14 +95,14 @@ export default function NovaTransferencia() {
           {/* Nome + Máscara */}
           <div className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Nome da transferência</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)}
+              <label htmlFor="input-nome-transferencia" className="block text-xs text-gray-400 mb-1">Nome da transferência</label>
+              <input id="input-nome-transferencia" value={nome} onChange={(e) => setNome(e.target.value)}
                 placeholder="Ex: Carga Assessoria Services"
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Máscara do arquivo</label>
-              <input value={mascara} onChange={(e) => setMascara(e.target.value)}
+              <label htmlFor="input-mascara" className="block text-xs text-gray-400 mb-1">Máscara do arquivo</label>
+              <input id="input-mascara" value={mascara} onChange={(e) => setMascara(e.target.value)}
                 placeholder="* ou COBRANCA_PRD* ou *.REM"
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
               <p className="text-xs text-gray-600 mt-1">Use * para qualquer arquivo ou parte do nome (ex: CARGA_* pega todos que começam com CARGA_)</p>
@@ -181,8 +181,8 @@ export default function NovaTransferencia() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-2">Retenção de backup (dias para excluir arquivos antigos)</label>
-              <div className="flex gap-4">
+              <label id="label-retencao" className="block text-xs text-gray-400 mb-2">Retenção de backup (dias para excluir arquivos antigos)</label>
+              <div className="flex gap-4" role="radiogroup" aria-labelledby="label-retencao">
                 {[365, 120, 60].map((dias) => (
                   <label key={dias} className="flex items-center gap-1.5 text-sm text-gray-300 cursor-pointer">
                     <input type="radio" name="retencao" value={dias} checked={retencao === dias}

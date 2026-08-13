@@ -66,20 +66,20 @@ export default function Logs() {
             <h1 className="text-2xl font-mono text-green-400">Logs de Transferência</h1>
             <p className="text-sm text-gray-500 mt-1">Registros de arquivos transferidos por dia</p>
           </div>
-          <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+          <button type="button" onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
         </div>
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Dia</label>
-            <input type="date" value={data} onChange={(e) => { setData(e.target.value); setPage(1); }}
+            <label htmlFor="filter-dia" className="block text-xs text-gray-500 mb-1">Dia</label>
+            <input id="filter-dia" type="date" value={data} onChange={(e) => { setData(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 focus:outline-none focus:border-green-500" />
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Status</label>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            <label htmlFor="filter-status" className="block text-xs text-gray-500 mb-1">Status</label>
+            <select id="filter-status" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               <option value="">Todos</option>
               <option value="S">Sucesso</option>
@@ -89,13 +89,13 @@ export default function Logs() {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Arquivo</label>
+            <label htmlFor="filter-arquivo" className="block text-xs text-gray-500 mb-1">Arquivo</label>
             <div className="flex gap-2">
-              <input value={arquivo} onChange={(e) => setArquivo(e.target.value)}
+              <input id="filter-arquivo" value={arquivo} onChange={(e) => setArquivo(e.target.value)}
                 placeholder="Buscar por nome..."
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 w-56 focus:outline-none focus:border-green-500" />
-              <button onClick={handleSearch} className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded">Buscar</button>
+              <button type="button" onClick={handleSearch} className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded">Buscar</button>
             </div>
           </div>
 
@@ -149,9 +149,9 @@ export default function Logs() {
             <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
               <span>Página {page} de {pageCount}</span>
               <div className="flex gap-2">
-                <button disabled={page <= 1} onClick={() => setPage(page - 1)}
+                <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}
                   className="px-3 py-1 bg-gray-800 rounded disabled:opacity-30">← Anterior</button>
-                <button disabled={page >= pageCount} onClick={() => setPage(page + 1)}
+                <button type="button" disabled={page >= pageCount} onClick={() => setPage(page + 1)}
                   className="px-3 py-1 bg-gray-800 rounded disabled:opacity-30">Próximo →</button>
               </div>
             </div>

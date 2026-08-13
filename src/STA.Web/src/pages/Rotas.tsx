@@ -48,8 +48,8 @@ export default function Rotas() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-mono text-green-400">Rotas da Etapa #{etapaId}</h1>
           <div className="flex gap-3">
-            <button onClick={() => navigate('/etapas')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
-            <button onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Nova Rota</button>
+            <button type="button" onClick={() => navigate('/etapas')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+            <button type="button" onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Nova Rota</button>
           </div>
         </div>
 
@@ -85,9 +85,9 @@ export default function Rotas() {
                   </span>
                 </td>
                 <td className="py-2 px-2 space-x-2">
-                  <button onClick={() => { setEditing(r); setShowForm(true); }} className="text-blue-400 hover:text-blue-300 text-xs">Editar</button>
-                  <button onClick={() => navigate(`/rotas/${r.cnRota}/destinos`)} className="text-gray-400 hover:text-gray-300 text-xs">Destinos</button>
-                  <button onClick={() => handleDelete(r.cnRota)} className="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+                  <button type="button" onClick={() => { setEditing(r); setShowForm(true); }} className="text-blue-400 hover:text-blue-300 text-xs">Editar</button>
+                  <button type="button" onClick={() => navigate(`/rotas/${r.cnRota}/destinos`)} className="text-gray-400 hover:text-gray-300 text-xs">Destinos</button>
+                  <button type="button" onClick={() => handleDelete(r.cnRota)} className="text-red-400 hover:text-red-300 text-xs">Excluir</button>
                 </td>
               </tr>
             ))}
@@ -150,34 +150,34 @@ function RotaFormModal({ initial, onSave, onCancel }: {
         <h2 className="text-lg text-green-400 font-mono">{initial ? 'Editar Rota' : 'Nova Rota'}</h2>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Diretório de Origem</label>
-          <input value={form.dsDiretorioOrigem} onChange={(e) => set('dsDiretorioOrigem', e.target.value)}
+          <label htmlFor="input-diretorio-origem" className="block text-xs text-gray-400 mb-1">Diretório de Origem</label>
+          <input id="input-diretorio-origem" value={form.dsDiretorioOrigem} onChange={(e) => set('dsDiretorioOrigem', e.target.value)}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Máscara</label>
-            <input value={form.dsMascaraArquivo} onChange={(e) => set('dsMascaraArquivo', e.target.value)}
+            <label htmlFor="input-mascara-rota" className="block text-xs text-gray-400 mb-1">Máscara</label>
+            <input id="input-mascara-rota" value={form.dsMascaraArquivo} onChange={(e) => set('dsMascaraArquivo', e.target.value)}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Ordem</label>
-            <input type="number" value={form.nrOrdem} onChange={(e) => set('nrOrdem', Number(e.target.value))}
+            <label htmlFor="input-ordem-rota" className="block text-xs text-gray-400 mb-1">Ordem</label>
+            <input id="input-ordem-rota" type="number" value={form.nrOrdem} onChange={(e) => set('nrOrdem', Number(e.target.value))}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Diretório de Backup</label>
-          <input value={form.dsDiretorioBackup} onChange={(e) => set('dsDiretorioBackup', e.target.value)}
+          <label htmlFor="input-diretorio-backup" className="block text-xs text-gray-400 mb-1">Diretório de Backup</label>
+          <input id="input-diretorio-backup" value={form.dsDiretorioBackup} onChange={(e) => set('dsDiretorioBackup', e.target.value)}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Compactação</label>
-            <select value={form.dsCompactaOrigemTipo} onChange={(e) => set('dsCompactaOrigemTipo', e.target.value)}
+            <label htmlFor="input-compactacao" className="block text-xs text-gray-400 mb-1">Compactação</label>
+            <select id="input-compactacao" value={form.dsCompactaOrigemTipo} onChange={(e) => set('dsCompactaOrigemTipo', e.target.value)}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm">
               <option value="">Nenhuma</option>
               <option value="7Z">7-Zip</option>
@@ -185,8 +185,8 @@ function RotaFormModal({ initial, onSave, onCancel }: {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Dias para excluir backup</label>
-            <input type="number" value={form.nrDiasExcluir} onChange={(e) => set('nrDiasExcluir', Number(e.target.value))}
+            <label htmlFor="input-dias-exclusao" className="block text-xs text-gray-400 mb-1">Dias para excluir backup</label>
+            <input id="input-dias-exclusao" type="number" value={form.nrDiasExcluir} onChange={(e) => set('nrDiasExcluir', Number(e.target.value))}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>
         </div>

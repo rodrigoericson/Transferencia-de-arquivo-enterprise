@@ -89,8 +89,9 @@ export default function RenameConfig({ value, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 mb-1">Novo nome (obrigatório)</label>
+        <label htmlFor="input-novo-nome" className="block text-xs text-gray-500 mb-1">Novo nome (obrigatório)</label>
         <input
+          id="input-novo-nome"
           value={nome}
           onChange={(e) => { setNome(e.target.value); buildAndPropagate(ativo, e.target.value, incluirData, alterarExt, novaExt); }}
           placeholder="COBREM_SANTANDER"
@@ -108,6 +109,7 @@ export default function RenameConfig({ value, onChange }: Props) {
         <label htmlFor="alterar-ext" className="text-xs text-gray-400">Alterar extensão</label>
         {alterarExt && (
           <input
+            id="input-nova-extensao"
             value={novaExt}
             onChange={(e) => { setNovaExt(e.target.value); buildAndPropagate(ativo, nome, incluirData, alterarExt, e.target.value); }}
             placeholder="dat"

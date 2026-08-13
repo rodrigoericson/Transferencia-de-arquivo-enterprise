@@ -54,19 +54,19 @@ export default function SftpBrowserModal({ conexao, onCancel }: SftpBrowserModal
             <h2 className="text-lg text-green-400 font-mono">Explorar SFTP</h2>
             <p className="text-sm text-gray-500 mt-1">{conexao.nmConexao} • {conexao.dsHost}:{conexao.nrPorta}</p>
           </div>
-          <button onClick={onCancel} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Fechar</button>
+          <button type="button" onClick={onCancel} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Fechar</button>
         </div>
 
         <div className="p-5 border-b border-gray-800 space-y-3">
-          <label className="block text-xs text-gray-400">Caminho remoto</label>
+          <label htmlFor="input-caminho-remoto" className="block text-xs text-gray-400">Caminho remoto</label>
           <div className="flex gap-2">
-            <input value={inputPath} onChange={(e) => setInputPath(e.target.value)}
+            <input id="input-caminho-remoto" value={inputPath} onChange={(e) => setInputPath(e.target.value)}
               className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
-            <button onClick={() => browse(inputPath)} disabled={loading}
+            <button type="button" onClick={() => browse(inputPath)} disabled={loading}
               className="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 disabled:opacity-60 rounded">Ir</button>
-            <button onClick={() => browse(getParentPath(path))} disabled={loading || path === '/'}
+            <button type="button" onClick={() => browse(getParentPath(path))} disabled={loading || path === '/'}
               className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-40 rounded">Subir</button>
-            <button onClick={() => browse(path)} disabled={loading}
+            <button type="button" onClick={() => browse(path)} disabled={loading}
               className="px-3 py-2 text-sm bg-blue-900 text-blue-300 hover:bg-blue-800 disabled:opacity-60 rounded">Atualizar</button>
           </div>
           <p className="text-xs text-gray-500 font-mono">Atual: {path}</p>

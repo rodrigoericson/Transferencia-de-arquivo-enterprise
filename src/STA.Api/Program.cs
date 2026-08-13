@@ -111,4 +111,4 @@ app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("api");
 app.MapHealthChecks("/health");
 
-app.Run();
+await app.RunAsync();

@@ -73,20 +73,20 @@ export default function LogsSftpPage() {
             <h1 className="text-2xl font-mono text-green-400">Logs SFTP</h1>
             <p className="text-sm text-gray-500 mt-1">Registros de conexão e transferência SFTP</p>
           </div>
-          <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+          <button type="button" onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
         </div>
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 mb-4 items-end">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Dia</label>
-            <input type="date" value={de} onChange={(e) => { setDe(e.target.value); setPage(1); }}
+            <label htmlFor="filter-dia-sftp" className="block text-xs text-gray-500 mb-1">Dia</label>
+            <input id="filter-dia-sftp" type="date" value={de} onChange={(e) => { setDe(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 focus:outline-none focus:border-green-500" />
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Conexão</label>
-            <select value={conexaoId} onChange={(e) => { setConexaoId(e.target.value); setPage(1); }}
+            <label htmlFor="filter-conexao" className="block text-xs text-gray-500 mb-1">Conexão</label>
+            <select id="filter-conexao" value={conexaoId} onChange={(e) => { setConexaoId(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               <option value="">Todas</option>
               {conexoes.map(c => <option key={c.cnConexaoSftp} value={c.cnConexaoSftp}>{c.nmConexao}</option>)}
@@ -94,8 +94,8 @@ export default function LogsSftpPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Tipo</label>
-            <select value={tipo} onChange={(e) => { setTipo(e.target.value); setPage(1); }}
+            <label htmlFor="filter-tipo" className="block text-xs text-gray-500 mb-1">Tipo</label>
+            <select id="filter-tipo" value={tipo} onChange={(e) => { setTipo(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               {TIPOS.map(t => <option key={t} value={t}>{t || 'Todos'}</option>)}
             </select>
@@ -159,9 +159,9 @@ export default function LogsSftpPage() {
             <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
               <span>Página {page} de {pageCount}</span>
               <div className="flex gap-2">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
                   className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40">Anterior</button>
-                <button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount}
+                <button type="button" onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount}
                   className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40">Próxima</button>
               </div>
             </div>

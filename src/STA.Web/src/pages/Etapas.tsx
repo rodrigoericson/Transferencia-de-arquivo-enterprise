@@ -65,15 +65,15 @@ export default function Etapas() {
             <p className="text-sm text-gray-500 mt-1">Gerencie suas cadeias de transferência de arquivos</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => navigate('/')} className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
-            {canEdit && <button onClick={() => navigate('/etapas/nova')} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">+ Nova Transferência</button>}
+            <button type="button" onClick={() => navigate('/')} className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+            {canEdit && <button type="button" onClick={() => navigate('/etapas/nova')} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">+ Nova Transferência</button>}
           </div>
         </div>
 
         {etapas.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             <p className="mb-4">Nenhuma transferência cadastrada.</p>
-            <button onClick={() => navigate('/etapas/nova')} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">Criar primeira transferência</button>
+            <button type="button" onClick={() => navigate('/etapas/nova')} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">Criar primeira transferência</button>
           </div>
         )}
 
@@ -93,13 +93,13 @@ export default function Etapas() {
                 </div>
                 {canEdit && (
                   <div className="flex gap-2">
-                    <button onClick={() => navigate(`/etapas/${etapa.cnEtapa}/editar`)}
+                    <button type="button" onClick={() => navigate(`/etapas/${etapa.cnEtapa}/editar`)}
                       className="px-2 py-1 text-xs text-blue-400 hover:bg-blue-900/30 rounded">Editar</button>
-                    <button onClick={() => handleToggle(etapa)}
+                    <button type="button" onClick={() => handleToggle(etapa)}
                       className={`px-2 py-1 text-xs rounded ${etapa.flAtivo ? 'text-yellow-400 hover:bg-yellow-900/30' : 'text-green-400 hover:bg-green-900/30'}`}>
                       {etapa.flAtivo ? 'Desativar' : 'Ativar'}
                     </button>
-                    <button onClick={() => handleDelete(etapa.cnEtapa)}
+                    <button type="button" onClick={() => handleDelete(etapa.cnEtapa)}
                       className="px-2 py-1 text-xs text-red-400 hover:bg-red-900/30 rounded">Excluir</button>
                   </div>
                 )}

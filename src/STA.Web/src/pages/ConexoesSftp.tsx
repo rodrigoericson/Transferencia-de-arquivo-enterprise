@@ -88,8 +88,8 @@ export default function ConexoesSftpPage() {
             <p className="text-sm text-gray-500 mt-1">Gerenciar conexões SFTP para transferência externa</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
-            <button onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Nova Conexão</button>
+            <button type="button" onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+            <button type="button" onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Nova Conexão</button>
           </div>
         </div>
 
@@ -120,11 +120,11 @@ export default function ConexoesSftpPage() {
                     {c.flPossuiChavePrivada && <p className="text-xs text-gray-600 mt-1">🔑 Chave privada configurada</p>}
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    <button onClick={() => handleTestar(c)} className="px-2 py-1 text-xs bg-blue-900 text-blue-300 hover:bg-blue-800 rounded">↻ Testar</button>
-                    <button onClick={() => setBrowsing(c)} className="px-2 py-1 text-xs bg-purple-900 text-purple-300 hover:bg-purple-800 rounded">Explorar</button>
-                    <button onClick={() => { setEditing(c); setShowForm(true); }} className="px-2 py-1 text-xs bg-gray-700 text-gray-300 hover:bg-gray-600 rounded">Editar</button>
-                    <button onClick={() => handleDelete(c.cnConexaoSftp, c.nmConexao)} className="px-2 py-1 text-xs bg-red-900 text-red-300 hover:bg-red-800 rounded">Excluir</button>
-                    <button onClick={() => handleToggleAtivo(c)}
+                    <button type="button" onClick={() => handleTestar(c)} className="px-2 py-1 text-xs bg-blue-900 text-blue-300 hover:bg-blue-800 rounded">↻ Testar</button>
+                    <button type="button" onClick={() => setBrowsing(c)} className="px-2 py-1 text-xs bg-purple-900 text-purple-300 hover:bg-purple-800 rounded">Explorar</button>
+                    <button type="button" onClick={() => { setEditing(c); setShowForm(true); }} className="px-2 py-1 text-xs bg-gray-700 text-gray-300 hover:bg-gray-600 rounded">Editar</button>
+                    <button type="button" onClick={() => handleDelete(c.cnConexaoSftp, c.nmConexao)} className="px-2 py-1 text-xs bg-red-900 text-red-300 hover:bg-red-800 rounded">Excluir</button>
+                    <button type="button" onClick={() => handleToggleAtivo(c)}
                       className={`px-2 py-1 text-xs rounded ${c.flAtivo ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' : 'bg-green-900 text-green-300 hover:bg-green-800'}`}>
                       {c.flAtivo ? 'Desativar' : 'Ativar'}
                     </button>
@@ -218,57 +218,57 @@ function ConexaoSftpFormModal({ initial, onSave, onCancel }: {
         <h2 className="text-lg text-green-400 font-mono">{initial ? 'Editar Conexão SFTP' : 'Nova Conexão SFTP'}</h2>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Nome da conexão</label>
-          <input value={form.nmConexao} onChange={(e) => set('nmConexao', e.target.value)}
+          <label htmlFor="input-nome-conexao" className="block text-xs text-gray-400 mb-1">Nome da conexão</label>
+          <input id="input-nome-conexao" value={form.nmConexao} onChange={(e) => set('nmConexao', e.target.value)}
             placeholder="SFTP Santander"
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Host</label>
-            <input value={form.dsHost} onChange={(e) => set('dsHost', e.target.value)}
+            <label htmlFor="input-host" className="block text-xs text-gray-400 mb-1">Host</label>
+            <input id="input-host" value={form.dsHost} onChange={(e) => set('dsHost', e.target.value)}
               placeholder="sftp.empresa.com"
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Porta</label>
-            <input type="number" value={form.nrPorta} onChange={(e) => set('nrPorta', Number(e.target.value))}
+            <label htmlFor="input-porta" className="block text-xs text-gray-400 mb-1">Porta</label>
+            <input id="input-porta" type="number" value={form.nrPorta} onChange={(e) => set('nrPorta', Number(e.target.value))}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Usuário</label>
-          <input value={form.dsUsuario} onChange={(e) => set('dsUsuario', e.target.value)}
+          <label htmlFor="input-usuario-sftp" className="block text-xs text-gray-400 mb-1">Usuário</label>
+          <input id="input-usuario-sftp" value={form.dsUsuario} onChange={(e) => set('dsUsuario', e.target.value)}
             placeholder="usuario_sftp"
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Senha {initial?.flPossuiSenha && '<span class="text-gray-600">(deixe vazio para manter)</span>'}</label>
-          <input type="password" value={form.dsSenhaPlaintext} onChange={(e) => set('dsSenhaPlaintext', e.target.value)}
+          <label htmlFor="input-senha-sftp" className="block text-xs text-gray-400 mb-1">Senha {initial?.flPossuiSenha && <span className="text-gray-600">(deixe vazio para manter)</span>}</label>
+          <input id="input-senha-sftp" type="password" value={form.dsSenhaPlaintext} onChange={(e) => set('dsSenhaPlaintext', e.target.value)}
             placeholder={initial?.flPossuiSenha ? '••••••••' : 'Senha SFTP'}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Caminho chave privada <span className="text-gray-600">(alternativo à senha)</span></label>
-          <input value={form.dsCaminhoChavePrivada} onChange={(e) => set('dsCaminhoChavePrivada', e.target.value)}
+          <label htmlFor="input-chave-privada" className="block text-xs text-gray-400 mb-1">Caminho chave privada <span className="text-gray-600">(alternativo à senha)</span></label>
+          <input id="input-chave-privada" value={form.dsCaminhoChavePrivada} onChange={(e) => set('dsCaminhoChavePrivada', e.target.value)}
             placeholder="C:\\Keys\\id_rsa"
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Horários de execução <span className="text-gray-600">(separados por vírgula)</span></label>
-          <input value={form.dsHorariosExecucao} onChange={(e) => set('dsHorariosExecucao', e.target.value)}
+          <label htmlFor="input-horarios-execucao" className="block text-xs text-gray-400 mb-1">Horários de execução <span className="text-gray-600">(separados por vírgula)</span></label>
+          <input id="input-horarios-execucao" value={form.dsHorariosExecucao} onChange={(e) => set('dsHorariosExecucao', e.target.value)}
             placeholder="04:00, 10:00, 15:00, 20:00"
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-2">Dias da semana</label>
-          <div className="flex gap-2 flex-wrap">
+          <label id="label-dias-semana" className="block text-xs text-gray-400 mb-2">Dias da semana</label>
+          <div className="flex gap-2 flex-wrap" role="group" aria-labelledby="label-dias-semana">
             {DIAS.map(dia => (
               <button key={dia} type="button" onClick={() => toggleDia(dia)}
                 className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
@@ -289,8 +289,8 @@ function ConexaoSftpFormModal({ initial, onSave, onCancel }: {
             <label htmlFor="flObrigatorio" className="text-xs text-gray-400">Arquivo obrigatório</label>
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Tolerância (min)</label>
-            <input type="number" value={form.nrToleranciaMinutos} onChange={(e) => set('nrToleranciaMinutos', Number(e.target.value))}
+            <label htmlFor="input-tolerancia-minutos" className="block text-xs text-gray-400 mb-1">Tolerância (min)</label>
+            <input id="input-tolerancia-minutos" type="number" value={form.nrToleranciaMinutos} onChange={(e) => set('nrToleranciaMinutos', Number(e.target.value))}
               min={1} max={60}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
           </div>

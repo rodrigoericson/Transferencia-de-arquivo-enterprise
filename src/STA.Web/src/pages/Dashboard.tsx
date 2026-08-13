@@ -104,7 +104,7 @@ export default function Dashboard() {
           <div className="mb-8 p-4 bg-red-950/30 border border-red-900/50 rounded-lg">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-medium text-red-400">⚠️ Erros e Avisos (últimos 7 dias)</h3>
-              <button onClick={() => navigate('/logs')} className="text-xs text-red-400 hover:text-red-300">Ver todos →</button>
+              <button type="button" onClick={() => navigate('/logs')} className="text-xs text-red-400 hover:text-red-300">Ver todos →</button>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {errosRecentes.map((log) => (
@@ -129,9 +129,9 @@ export default function Dashboard() {
         {sessionStorage.getItem('sta_role') === 'Admin' && (
           <div className="flex gap-3 mb-8">
             {status?.status === 'rodando' ? (
-              <button onClick={handlePause} className="px-4 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 rounded">Pausar Worker</button>
+              <button type="button" onClick={handlePause} className="px-4 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 rounded">Pausar Worker</button>
             ) : (
-              <button onClick={handleResume} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">Retomar Worker</button>
+              <button type="button" onClick={handleResume} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 rounded">Retomar Worker</button>
             )}
           </div>
         )}
@@ -177,7 +177,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
 
 function NavCard({ title, description, onClick, accent, sftp }: { title: string; description: string; onClick: () => void; accent?: boolean; sftp?: boolean }) {
   return (
-    <button onClick={onClick}
+    <button type="button" onClick={onClick}
       className={`text-left p-5 rounded-lg border transition-colors ${
         accent
           ? 'bg-green-900/20 border-green-700 hover:bg-green-900/40'

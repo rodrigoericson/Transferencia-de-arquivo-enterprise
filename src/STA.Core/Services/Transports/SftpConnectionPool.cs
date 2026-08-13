@@ -38,7 +38,8 @@ public class SftpConnectionPool : IDisposable
 
                 _logger.LogWarning("Conexao SFTP '{Nome}' perdida. Reconectando...", conexao.NmConexao);
                 EnqueueLog(conexao, "W", "Conexão perdida — reconectando");
-                try { existing.Dispose(); } catch { }
+                try { existing.Dispose(); }
+                catch (Exception exDispose) { _logger.LogDebug(exDispose, "Erro ao dispose conexão SFTP anterior."); }
                 _pool.Remove(conexao.CnConexaoSftp);
             }
 
@@ -121,5 +122,6 @@ public class SftpConnectionPool : IDisposable
     public void Dispose()
     {
         CloseAll();
+        GC.SuppressFinalize(this);
     }
 }

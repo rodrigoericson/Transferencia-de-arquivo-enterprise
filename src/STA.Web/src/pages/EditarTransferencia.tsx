@@ -168,7 +168,7 @@ export default function EditarTransferencia() {
       <div className="max-w-2xl mx-auto p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-mono text-green-400">Editar Transferência</h1>
-          <button onClick={() => navigate('/etapas')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+          <button type="button" onClick={() => navigate('/etapas')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -176,13 +176,13 @@ export default function EditarTransferencia() {
           {/* Nome + Máscara + Status */}
           <div className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Nome da transferência</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)}
+              <label htmlFor="edit-nome-transferencia" className="block text-xs text-gray-400 mb-1">Nome da transferência</label>
+              <input id="edit-nome-transferencia" value={nome} onChange={(e) => setNome(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Máscara do arquivo</label>
-              <input value={mascara} onChange={(e) => setMascara(e.target.value)}
+              <label htmlFor="edit-mascara" className="block text-xs text-gray-400 mb-1">Máscara do arquivo</label>
+              <input id="edit-mascara" value={mascara} onChange={(e) => setMascara(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
             </div>
             <div className="flex items-center gap-2">
@@ -249,8 +249,8 @@ export default function EditarTransferencia() {
             {retornoConfig.flHabilitarRetorno ? (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Conexão SFTP</label>
-                  <select value={retornoConfig.cnConexaoSftpRetorno ?? ''}
+                  <label htmlFor="edit-conexao-sftp-retorno" className="block text-xs text-gray-400 mb-1">Conexão SFTP</label>
+                  <select id="edit-conexao-sftp-retorno" value={retornoConfig.cnConexaoSftpRetorno ?? ''}
                     onChange={(e) => setRetornoConfig({ ...retornoConfig, cnConexaoSftpRetorno: e.target.value ? Number(e.target.value) : null })}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm">
                     <option value="">Selecione...</option>
@@ -260,22 +260,22 @@ export default function EditarTransferencia() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Pasta remota de retorno</label>
-                  <input value={retornoConfig.dsDiretorioRetorno ?? ''}
+                  <label htmlFor="edit-pasta-remota-retorno" className="block text-xs text-gray-400 mb-1">Pasta remota de retorno</label>
+                  <input id="edit-pasta-remota-retorno" value={retornoConfig.dsDiretorioRetorno ?? ''}
                     onChange={(e) => setRetornoConfig({ ...retornoConfig, dsDiretorioRetorno: e.target.value || null })}
                     placeholder="/retorno"
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-purple-500" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Máscara do retorno <span className="text-gray-600">(padrão: *)</span></label>
-                  <input value={retornoConfig.dsMascaraRetorno}
+                  <label htmlFor="edit-mascara-retorno" className="block text-xs text-gray-400 mb-1">Máscara do retorno <span className="text-gray-600">(padrão: *)</span></label>
+                  <input id="edit-mascara-retorno" value={retornoConfig.dsMascaraRetorno}
                     onChange={(e) => setRetornoConfig({ ...retornoConfig, dsMascaraRetorno: e.target.value || '*' })}
                     placeholder="*"
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-purple-500" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Pasta local de recebimento</label>
-                  <input value={retornoConfig.dsDiretorioLocalRetorno ?? ''}
+                  <label htmlFor="edit-pasta-local-retorno" className="block text-xs text-gray-400 mb-1">Pasta local de recebimento</label>
+                  <input id="edit-pasta-local-retorno" value={retornoConfig.dsDiretorioLocalRetorno ?? ''}
                     onChange={(e) => setRetornoConfig({ ...retornoConfig, dsDiretorioLocalRetorno: e.target.value || null })}
                     placeholder="F:\STA\Retornos"
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-purple-500" />
@@ -297,8 +297,8 @@ export default function EditarTransferencia() {
               <label htmlFor="compactar" className="text-sm text-gray-300">Compactar na origem (7-Zip)</label>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-2">Retenção de backup (dias)</label>
-              <div className="flex gap-4">
+              <label id="label-retencao-editar" className="block text-xs text-gray-400 mb-2">Retenção de backup (dias)</label>
+              <div className="flex gap-4" role="radiogroup" aria-labelledby="label-retencao-editar">
                 {[365, 120, 60].map((dias) => (
                   <label key={dias} className="flex items-center gap-1.5 text-sm text-gray-300 cursor-pointer">
                     <input type="radio" name="retencao" value={dias} checked={retencao === dias}

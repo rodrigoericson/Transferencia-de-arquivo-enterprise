@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -383,7 +384,7 @@ public class ConexoesSftpController : ControllerBase
 
         foreach (var h in horarios)
         {
-            if (!TimeSpan.TryParse(h, out _))
+            if (!TimeSpan.TryParse(h, CultureInfo.InvariantCulture, out _))
             {
                 erro = $"Horário inválido: '{h}'. Use formato HH:mm (ex: 08:00, 14:30).";
                 return false;

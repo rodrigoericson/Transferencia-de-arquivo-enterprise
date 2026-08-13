@@ -48,8 +48,9 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Usuário</label>
+              <label htmlFor="input-usuario" className="block text-sm text-gray-400 mb-1">Usuário</label>
               <input
+                id="input-usuario"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -59,8 +60,9 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Senha</label>
+              <label htmlFor="input-senha" className="block text-sm text-gray-400 mb-1">Senha</label>
               <input
+                id="input-senha"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

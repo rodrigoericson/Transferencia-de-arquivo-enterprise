@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using STA.Core.Data.Repositories;
@@ -90,8 +91,8 @@ public class Worker : BackgroundService
             return;
         }
 
-        if (!TimeSpan.TryParse(_ultimosParametros.HoraInicial, out var horaIni)
-            || !TimeSpan.TryParse(_ultimosParametros.HoraFinal, out var horaFim))
+        if (!TimeSpan.TryParse(_ultimosParametros.HoraInicial, CultureInfo.InvariantCulture, out var horaIni)
+            || !TimeSpan.TryParse(_ultimosParametros.HoraFinal, CultureInfo.InvariantCulture, out var horaFim))
         {
             _logger.LogWarning(
                 "Formato de horário inválido (Ini='{Ini}', Fim='{Fim}'). Ciclo ignorado.",

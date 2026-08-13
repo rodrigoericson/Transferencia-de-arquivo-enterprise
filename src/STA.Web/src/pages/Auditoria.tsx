@@ -74,47 +74,47 @@ export default function AuditoriaPage() {
             <h1 className="text-2xl font-mono text-green-400">Auditoria</h1>
             <p className="text-sm text-gray-500 mt-1">Histórico de ações no sistema</p>
           </div>
-          <button onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+          <button type="button" onClick={() => navigate('/')} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
         </div>
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 mb-4 items-end">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">De</label>
-            <input type="date" value={de} onChange={(e) => { setDe(e.target.value); setPage(1); }}
+            <label htmlFor="filter-de" className="block text-xs text-gray-500 mb-1">De</label>
+            <input id="filter-de" type="date" value={de} onChange={(e) => { setDe(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 focus:outline-none focus:border-green-500" />
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Até</label>
-            <input type="date" value={ate} onChange={(e) => { setAte(e.target.value); setPage(1); }}
+            <label htmlFor="filter-ate" className="block text-xs text-gray-500 mb-1">Até</label>
+            <input id="filter-ate" type="date" value={ate} onChange={(e) => { setAte(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 focus:outline-none focus:border-green-500" />
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Entidade</label>
-            <select value={entidade} onChange={(e) => { setEntidade(e.target.value); setPage(1); }}
+            <label htmlFor="filter-entidade" className="block text-xs text-gray-500 mb-1">Entidade</label>
+            <select id="filter-entidade" value={entidade} onChange={(e) => { setEntidade(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               {ENTIDADES.map(e => <option key={e} value={e}>{e || 'Todas'}</option>)}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Ação</label>
-            <select value={acao} onChange={(e) => { setAcao(e.target.value); setPage(1); }}
+            <label htmlFor="filter-acao" className="block text-xs text-gray-500 mb-1">Ação</label>
+            <select id="filter-acao" value={acao} onChange={(e) => { setAcao(e.target.value); setPage(1); }}
               className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100">
               {ACOES.map(a => <option key={a} value={a}>{a || 'Todas'}</option>)}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Usuário</label>
+            <label htmlFor="filter-usuario" className="block text-xs text-gray-500 mb-1">Usuário</label>
             <div className="flex gap-2">
-              <input value={usuario} onChange={(e) => setUsuario(e.target.value)}
+              <input id="filter-usuario" value={usuario} onChange={(e) => setUsuario(e.target.value)}
                 placeholder="Buscar por nome..."
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-100 w-40 focus:outline-none focus:border-green-500" />
-              <button onClick={handleSearch} className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded">Buscar</button>
+              <button type="button" onClick={handleSearch} className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded">Buscar</button>
             </div>
           </div>
 
@@ -169,9 +169,9 @@ export default function AuditoriaPage() {
             <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
               <span>Página {page} de {pageCount}</span>
               <div className="flex gap-2">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
                   className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40">Anterior</button>
-                <button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount}
+                <button type="button" onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount}
                   className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded disabled:opacity-40">Próxima</button>
               </div>
             </div>

@@ -49,8 +49,8 @@ export default function Destinos() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-mono text-green-400">Destinos da Rota #{rotaId}</h1>
           <div className="flex gap-3">
-            <button onClick={() => navigate(-1)} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
-            <button onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Novo Destino</button>
+            <button type="button" onClick={() => navigate(-1)} className="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded">Voltar</button>
+            <button type="button" onClick={() => { setEditing(null); setShowForm(true); }} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded">Novo Destino</button>
           </div>
         </div>
 
@@ -82,8 +82,8 @@ export default function Destinos() {
                   </span>
                 </td>
                 <td className="py-2 px-3 space-x-2">
-                  <button onClick={() => { setEditing(d); setShowForm(true); }} className="text-blue-400 hover:text-blue-300 text-xs">Editar</button>
-                  <button onClick={() => handleDelete(d.cnRotaDestino)} className="text-red-400 hover:text-red-300 text-xs">Excluir</button>
+                  <button type="button" onClick={() => { setEditing(d); setShowForm(true); }} className="text-blue-400 hover:text-blue-300 text-xs">Editar</button>
+                  <button type="button" onClick={() => handleDelete(d.cnRotaDestino)} className="text-red-400 hover:text-red-300 text-xs">Excluir</button>
                 </td>
               </tr>
             ))}
@@ -157,8 +157,8 @@ function DestinoFormModal({ initial, onSave, onCancel }: {
           <h2 className="text-lg text-green-400 font-mono">{initial ? 'Editar Destino' : 'Novo Destino'}</h2>
 
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Protocolo</label>
-            <select value={form.idProtocolo} onChange={(e) => { set('idProtocolo', e.target.value); if (e.target.value === 'LOCAL') set('cnConexaoSftp', null); }}
+            <label htmlFor="select-protocolo" className="block text-xs text-gray-400 mb-1">Protocolo</label>
+            <select id="select-protocolo" value={form.idProtocolo} onChange={(e) => { set('idProtocolo', e.target.value); if (e.target.value === 'LOCAL') set('cnConexaoSftp', null); }}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm">
               <option value="LOCAL">LOCAL</option>
               <option value="SFTP">SFTP</option>
@@ -167,9 +167,9 @@ function DestinoFormModal({ initial, onSave, onCancel }: {
 
           {form.idProtocolo === 'SFTP' && (
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Conexão SFTP</label>
+              <label htmlFor="select-conexao-sftp" className="block text-xs text-gray-400 mb-1">Conexão SFTP</label>
               <div className="flex gap-2">
-                <select value={form.cnConexaoSftp ?? ''} onChange={(e) => set('cnConexaoSftp', e.target.value ? Number(e.target.value) : null)}
+                <select id="select-conexao-sftp" value={form.cnConexaoSftp ?? ''} onChange={(e) => set('cnConexaoSftp', e.target.value ? Number(e.target.value) : null)}
                   className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm">
                   <option value="">Selecione...</option>
                   {conexoes.map(c => (
@@ -185,31 +185,31 @@ function DestinoFormModal({ initial, onSave, onCancel }: {
           )}
 
           <div>
-            <label className="block text-xs text-gray-400 mb-1">{form.idProtocolo === 'SFTP' ? 'Diretório Remoto' : 'Diretório de Destino'}</label>
-            <input value={form.dsDiretorioDestino} onChange={(e) => set('dsDiretorioDestino', e.target.value)}
+            <label htmlFor="input-diretorio-destino" className="block text-xs text-gray-400 mb-1">{form.idProtocolo === 'SFTP' ? 'Diretório Remoto' : 'Diretório de Destino'}</label>
+            <input id="input-diretorio-destino" value={form.dsDiretorioDestino} onChange={(e) => set('dsDiretorioDestino', e.target.value)}
               placeholder={form.idProtocolo === 'SFTP' ? '/entrada' : 'D:\\Destino\\Pasta'}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm font-mono focus:outline-none focus:border-green-500" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Descompactar no destino</label>
-              <select value={form.dsDescompactaDestino} onChange={(e) => set('dsDescompactaDestino', e.target.value)}
+              <label htmlFor="select-descompactar" className="block text-xs text-gray-400 mb-1">Descompactar no destino</label>
+              <select id="select-descompactar" value={form.dsDescompactaDestino} onChange={(e) => set('dsDescompactaDestino', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm">
                 <option value="">Não</option>
                 <option value="SIM">Sim</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Ordem</label>
-              <input type="number" value={form.nrOrdem} onChange={(e) => set('nrOrdem', Number(e.target.value))}
+              <label htmlFor="input-ordem" className="block text-xs text-gray-400 mb-1">Ordem</label>
+              <input id="input-ordem" type="number" value={form.nrOrdem} onChange={(e) => set('nrOrdem', Number(e.target.value))}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Padrão de Rename <span className="text-gray-600">(opcional)</span></label>
-            <input value={form.dsPadraoRename} onChange={(e) => set('dsPadraoRename', e.target.value)}
+            <label htmlFor="input-padrao-rename" className="block text-xs text-gray-400 mb-1">Padrão de Rename <span className="text-gray-600">(opcional)</span></label>
+            <input id="input-padrao-rename" value={form.dsPadraoRename} onChange={(e) => set('dsPadraoRename', e.target.value)}
               placeholder="Ex: {NAME}_{DATE}{EXT}"
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100 text-sm focus:outline-none focus:border-green-500" />
             <p className="text-xs text-gray-600 mt-1">Placeholders: {'{NAME}'} {'{DATE}'} {'{TIME}'} {'{EXT}'}</p>

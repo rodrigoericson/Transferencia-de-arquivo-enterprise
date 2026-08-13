@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace STA.Core.Services;
 
 public static class SftpSchedulerHelper
@@ -40,7 +42,7 @@ public static class SftpSchedulerHelper
 
         foreach (var horario in horarios)
         {
-            if (TimeSpan.TryParse(horario, out var scheduled))
+            if (TimeSpan.TryParse(horario, CultureInfo.InvariantCulture, out var scheduled))
             {
                 var diff = agoraTime - scheduled;
                 if (diff >= TimeSpan.Zero && diff <= TimeSpan.FromMinutes(toleranciaMinutos))
@@ -58,14 +60,14 @@ public static class SftpSchedulerHelper
 
         var horarios = dsHorariosExecucao
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(h => TimeSpan.TryParse(h, out _))
-            .OrderBy(h => TimeSpan.Parse(h))
+            .Where(h => TimeSpan.TryParse(h, CultureInfo.InvariantCulture, out _))
+            .OrderBy(h => TimeSpan.Parse(h, CultureInfo.InvariantCulture))
             .ToList();
 
         if (horarios.Count == 0) return true;
 
-        var ultimo = horarios.Last();
-        if (TimeSpan.TryParse(horarioAtual, out var atual) && TimeSpan.TryParse(ultimo, out var ultimoTs))
+        var ultimo = horarios[^1];
+        if (TimeSpan.TryParse(horarioAtual, CultureInfo.InvariantCulture, out var atual) && TimeSpan.TryParse(ultimo, CultureInfo.InvariantCulture, out var ultimoTs))
             return atual == ultimoTs;
 
         return ultimo == horarioAtual;

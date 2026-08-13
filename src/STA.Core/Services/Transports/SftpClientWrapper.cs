@@ -70,6 +70,7 @@ public class SftpClientWrapper : ISftpClientWrapper
         if (_client.IsConnected)
             _client.Disconnect();
         _client.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 

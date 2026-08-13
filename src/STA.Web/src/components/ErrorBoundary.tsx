@@ -31,6 +31,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <p className="text-2xl font-mono text-red-400 mb-4">Algo deu errado.</p>
             <p className="text-gray-500 text-sm mb-6">{this.state.error?.message}</p>
             <button
+              type="button"
               onClick={() => this.setState({ hasError: false })}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm"
             >
