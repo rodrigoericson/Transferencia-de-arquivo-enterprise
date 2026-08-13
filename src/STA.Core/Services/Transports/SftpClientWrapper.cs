@@ -6,7 +6,7 @@ namespace STA.Core.Services.Transports;
 public class SftpClientWrapper : ISftpClientWrapper
 {
     private readonly SftpClient _client;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     public SftpClientWrapper(SftpClient client)
     {

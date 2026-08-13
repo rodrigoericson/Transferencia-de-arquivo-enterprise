@@ -6,7 +6,7 @@ using STA.Core.Data.Repositories;
 
 namespace STA.Core.Services.Transports;
 
-public class SftpConnectionPool : IDisposable
+public class SftpConnectionPool : IDisposable, IAsyncDisposable
 {
     private readonly Dictionary<int, ISftpClientWrapper> _pool = new();
     private readonly object _poolLock = new();
@@ -99,7 +99,14 @@ public class SftpConnectionPool : IDisposable
     {
         lock (_poolLock)
         {
+            List<ISftpClientWrapper> toDispose = new();
             foreach (var (id, client) in _pool)
+            {
+                toDispose.Add(client);
+            }
+            _pool.Clear();
+
+            foreach (var client in toDispose)
             {
                 try
                 {
@@ -109,23 +116,31 @@ public class SftpConnectionPool : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Erro ao fechar conexao SFTP (id={Id}).", id);
+                    _logger.LogWarning(ex, "Erro ao fechar conexao SFTP.");
                 }
             }
-            _pool.Clear();
+
             _logger.LogDebug("Pool SFTP: todas as conexoes fechadas.");
         }
     }
 
     public int ActiveConnections => _pool.Count;
 
-    private bool _disposed;
+    private volatile bool _disposed;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        await FlushLogsAsync(CancellationToken.None);
+        CloseAll();
+        GC.SuppressFinalize(this);
+    }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
-        FlushLogsAsync(CancellationToken.None).GetAwaiter().GetResult();
         CloseAll();
         GC.SuppressFinalize(this);
     }

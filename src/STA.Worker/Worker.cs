@@ -182,7 +182,7 @@ public class Worker : BackgroundService
             catch (Exception ex) { _logger.LogWarning(ex, "Falha ao gravar logs SFTP do ciclo."); }
             finally
             {
-                sftpPool.Dispose();
+                await sftpPool.DisposeAsync();
             }
         }
         ReportarResultado(totals);
