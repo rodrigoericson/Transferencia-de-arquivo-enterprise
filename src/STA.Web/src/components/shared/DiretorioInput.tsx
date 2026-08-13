@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import api from '../../lib/api';
 
 interface Props {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -31,7 +32,7 @@ function getMensagemColor(validacao: Props['validacao']) {
   return 'text-red-400';
 }
 
-export default function DiretorioInput({ value, onChange, placeholder, validacao, onValidar }: Props) {
+export default function DiretorioInput({ id, value, onChange, placeholder, validacao, onValidar }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function DiretorioInput({ value, onChange, placeholder, validacao
     <div>
       <div className="relative">
         <input
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 
 interface Props {
   value: string;
@@ -6,6 +6,7 @@ interface Props {
 }
 
 export default function RenameConfig({ value, onChange }: Props) {
+  const idPrefix = useId();
   const [ativo, setAtivo] = useState(!!value);
   const [nome, setNome] = useState('');
   const [incluirData, setIncluirData] = useState(false);
@@ -73,8 +74,8 @@ export default function RenameConfig({ value, onChange }: Props) {
   if (!ativo) {
     return (
       <div className="flex items-center gap-2 mt-1">
-        <input type="checkbox" id="rename-ativo" checked={false} onChange={() => setAtivo(true)} className="w-3.5 h-3.5" />
-        <label htmlFor="rename-ativo" className="text-xs text-gray-500 cursor-pointer">Renomear arquivo neste destino</label>
+        <input type="checkbox" id={`${idPrefix}-ativo-off`} checked={false} onChange={() => setAtivo(true)} className="w-3.5 h-3.5" />
+        <label htmlFor={`${idPrefix}-ativo-off`} className="text-xs text-gray-500 cursor-pointer">Renomear arquivo neste destino</label>
       </div>
     );
   }
@@ -84,14 +85,14 @@ export default function RenameConfig({ value, onChange }: Props) {
   return (
     <div className="mt-2 p-3 bg-gray-800/50 rounded border border-gray-700/50 space-y-2">
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="rename-ativo" checked={true} onChange={() => { setAtivo(false); setNome(''); onChange(''); }} className="w-3.5 h-3.5" />
-        <label htmlFor="rename-ativo" className="text-xs text-gray-400 font-medium">Renomear arquivo</label>
+        <input type="checkbox" id={`${idPrefix}-ativo-on`} checked={true} onChange={() => { setAtivo(false); setNome(''); onChange(''); }} className="w-3.5 h-3.5" />
+        <label htmlFor={`${idPrefix}-ativo-on`} className="text-xs text-gray-400 font-medium">Renomear arquivo</label>
       </div>
 
       <div>
-        <label htmlFor="input-novo-nome" className="block text-xs text-gray-500 mb-1">Novo nome (obrigatório)</label>
+        <label htmlFor={`${idPrefix}-novo-nome`} className="block text-xs text-gray-500 mb-1">Novo nome (obrigatório)</label>
         <input
-          id="input-novo-nome"
+          id={`${idPrefix}-novo-nome`}
           value={nome}
           onChange={(e) => { setNome(e.target.value); buildAndPropagate(ativo, e.target.value, incluirData, alterarExt, novaExt); }}
           placeholder="COBREM_SANTANDER"
@@ -100,16 +101,16 @@ export default function RenameConfig({ value, onChange }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="incluir-data" checked={incluirData} onChange={(e) => { setIncluirData(e.target.checked); buildAndPropagate(ativo, nome, e.target.checked, alterarExt, novaExt); }} className="w-3.5 h-3.5" />
-        <label htmlFor="incluir-data" className="text-xs text-gray-400">Incluir data e hora (YYYYMMDDHHMMSS)</label>
+        <input type="checkbox" id={`${idPrefix}-incluir-data`} checked={incluirData} onChange={(e) => { setIncluirData(e.target.checked); buildAndPropagate(ativo, nome, e.target.checked, alterarExt, novaExt); }} className="w-3.5 h-3.5" />
+        <label htmlFor={`${idPrefix}-incluir-data`} className="text-xs text-gray-400">Incluir data e hora (YYYYMMDDHHMMSS)</label>
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="alterar-ext" checked={alterarExt} onChange={(e) => { setAlterarExt(e.target.checked); buildAndPropagate(ativo, nome, incluirData, e.target.checked, novaExt); }} className="w-3.5 h-3.5" />
-        <label htmlFor="alterar-ext" className="text-xs text-gray-400">Alterar extensão</label>
+        <input type="checkbox" id={`${idPrefix}-alterar-ext`} checked={alterarExt} onChange={(e) => { setAlterarExt(e.target.checked); buildAndPropagate(ativo, nome, incluirData, e.target.checked, novaExt); }} className="w-3.5 h-3.5" />
+        <label htmlFor={`${idPrefix}-alterar-ext`} className="text-xs text-gray-400">Alterar extensão</label>
         {alterarExt && (
           <input
-            id="input-nova-extensao"
+            id={`${idPrefix}-nova-extensao`}
             value={novaExt}
             onChange={(e) => { setNovaExt(e.target.value); buildAndPropagate(ativo, nome, incluirData, alterarExt, e.target.value); }}
             placeholder="dat"

@@ -6,6 +6,7 @@ namespace STA.Core.Services.Transports;
 public class SftpClientWrapper : ISftpClientWrapper
 {
     private readonly SftpClient _client;
+    private bool _disposed;
 
     public SftpClientWrapper(SftpClient client)
     {
@@ -67,8 +68,14 @@ public class SftpClientWrapper : ISftpClientWrapper
 
     public void Dispose()
     {
-        if (_client.IsConnected)
-            _client.Disconnect();
+        if (_disposed) return;
+        _disposed = true;
+        try
+        {
+            if (_client.IsConnected)
+                _client.Disconnect();
+        }
+        catch { }
         _client.Dispose();
         GC.SuppressFinalize(this);
     }

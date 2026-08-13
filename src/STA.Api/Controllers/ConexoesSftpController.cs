@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -372,30 +371,6 @@ public class ConexoesSftpController : ControllerBase
 
     private static bool ValidarHorarios(string dsHorarios, out string erro)
     {
-        erro = string.Empty;
-        if (string.IsNullOrWhiteSpace(dsHorarios))
-        {
-            erro = "Informe pelo menos um horário de execução.";
-            return false;
-        }
-
-        var horarios = dsHorarios.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var unicos = new HashSet<string>();
-
-        foreach (var h in horarios)
-        {
-            if (!TimeSpan.TryParse(h, CultureInfo.InvariantCulture, out _))
-            {
-                erro = $"Horário inválido: '{h}'. Use formato HH:mm (ex: 08:00, 14:30).";
-                return false;
-            }
-            if (!unicos.Add(h))
-            {
-                erro = $"Horário duplicado: '{h}'.";
-                return false;
-            }
-        }
-
-        return true;
+        return TimeSpanHelper.TryParseHorarios(dsHorarios, out _, out erro);
     }
 }

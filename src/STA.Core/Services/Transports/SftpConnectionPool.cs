@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using STA.Core.Data.Entities;
@@ -9,7 +10,7 @@ public class SftpConnectionPool : IDisposable
 {
     private readonly Dictionary<int, ISftpClientWrapper> _pool = new();
     private readonly object _poolLock = new();
-    private readonly List<LogSftp> _pendingLogs = new();
+    private readonly ConcurrentQueue<LogSftp> _pendingLogs = new();
     private readonly ISftpClientFactory _factory;
     private readonly ICredencialProtector _protector;
     private readonly ILogSftpRepository? _logSftpRepository;
@@ -44,9 +45,10 @@ public class SftpConnectionPool : IDisposable
             }
 
             var sw = Stopwatch.StartNew();
+            ISftpClientWrapper? client = null;
             try
             {
-                var client = _factory.Criar(conexao, _protector);
+                client = _factory.Criar(conexao, _protector);
                 client.Connect();
                 sw.Stop();
                 _pool[conexao.CnConexaoSftp] = client;
@@ -60,6 +62,7 @@ public class SftpConnectionPool : IDisposable
             catch (Exception ex)
             {
                 sw.Stop();
+                try { client?.Dispose(); } catch { }
                 _logger.LogError(ex, "Falha ao conectar SFTP '{Nome}' ({Host}:{Porta}).",
                     conexao.NmConexao, conexao.DsHost, conexao.NrPorta);
                 EnqueueLog(conexao, "E", $"Falha de conexão: {ex.Message} — {conexao.DsHost}:{conexao.NrPorta} (usuario: {conexao.DsUsuario}, tentativa: {sw.ElapsedMilliseconds}ms)", (int)sw.ElapsedMilliseconds);
@@ -70,7 +73,7 @@ public class SftpConnectionPool : IDisposable
 
     private void EnqueueLog(ConexaoSftp conexao, string status, string mensagem, int? duracaoMs = null)
     {
-        _pendingLogs.Add(new LogSftp
+        _pendingLogs.Enqueue(new LogSftp
         {
             CnConexaoSftp = conexao.CnConexaoSftp,
             IdTipo = "CONEXAO",
@@ -83,12 +86,9 @@ public class SftpConnectionPool : IDisposable
 
     public async Task FlushLogsAsync(CancellationToken ct = default)
     {
-        if (_logSftpRepository == null || _pendingLogs.Count == 0) return;
+        if (_logSftpRepository == null) return;
 
-        var logs = _pendingLogs.ToList();
-        _pendingLogs.Clear();
-
-        foreach (var log in logs)
+        while (_pendingLogs.TryDequeue(out var log))
         {
             try { await _logSftpRepository.InserirAsync(log, ct); }
             catch { }
@@ -119,8 +119,13 @@ public class SftpConnectionPool : IDisposable
 
     public int ActiveConnections => _pool.Count;
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+        FlushLogsAsync(CancellationToken.None).GetAwaiter().GetResult();
         CloseAll();
         GC.SuppressFinalize(this);
     }

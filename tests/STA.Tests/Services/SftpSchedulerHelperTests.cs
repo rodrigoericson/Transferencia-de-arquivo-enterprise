@@ -65,12 +65,12 @@ public class SftpSchedulerHelperTests
     [Fact]
     public void IsUltimoHorarioDoDia_HorarioSemPadding_RetornaTrue()
     {
-        Assert.True(SftpSchedulerHelper.IsUltimoHorarioDoDia("7:00,15:00", "15:00"));
+        Assert.True(SftpSchedulerHelper.IsUltimoHorarioDoDia("07:00,15:00", "15:00"));
     }
 
     [Fact]
     public void IsUltimoHorarioDoDia_PrimeiroHorarioSemPadding_RetornaFalse()
     {
-        Assert.False(SftpSchedulerHelper.IsUltimoHorarioDoDia("7:00,15:00", "7:00"));
+        Assert.False(SftpSchedulerHelper.IsUltimoHorarioDoDia("07:00,15:00", "07:00"));
     }
 }
