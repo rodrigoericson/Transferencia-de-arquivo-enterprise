@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using STA.Api.Common;
 using STA.Api.Dtos;
 using STA.Core.Data;
 using STA.Core.Data.Entities;
+using STA.Core.Data.Repositories;
 using STA.Core.Services;
+using STA.Core.Settings;
 
 namespace STA.Api.Controllers;
 
@@ -15,14 +18,29 @@ namespace STA.Api.Controllers;
 public class WorkerController : ControllerBase
 {
     private const int COD_WORKER_PAUSED = 4;
+    private const int COD_HORA_INI = 1;
+    private const int COD_HORA_FIM = 2;
+    private const int COD_PERIODO = 3;
+    private const int PERIODO_DEFAULT_MINUTOS = 5;
+    private const int CACHE_PERIODO_SEGUNDOS = 30;
 
     private readonly StaDbContext _context;
     private readonly IAuditService _audit;
+    private readonly IParametroRepository _paramRepository;
+    private readonly IOptions<StaSettings> _settings;
+    private int? _cachedPeriodoMinutos;
+    private DateTime _cacheValidoAte = DateTime.MinValue;
 
-    public WorkerController(StaDbContext context, IAuditService audit)
+    public WorkerController(
+        StaDbContext context,
+        IAuditService audit,
+        IParametroRepository paramRepository,
+        IOptions<StaSettings> settings)
     {
         _context = context;
         _audit = audit;
+        _paramRepository = paramRepository;
+        _settings = settings;
     }
 
     [HttpGet("status")]
@@ -99,12 +117,12 @@ public class WorkerController : ControllerBase
         if (ultimoCiclo?.DtFimProcesso != null)
             duracaoUltimoCiclo = ultimoCiclo.DtFimProcesso.Value - ultimoCiclo.DtInicio;
 
-        // Próximo ciclo: último fim + intervalo (5 min)
-        // Se já passou, não recalcula (frontend mostra "Aguardando")
+        // Próximo ciclo: último fim + período configurado (lido do banco com cache de 30s)
         DateTime? proximoCiclo = null;
         if (!isPaused && !executando && ultimoCiclo?.DtFimProcesso != null)
         {
-            proximoCiclo = ultimoCiclo.DtFimProcesso.Value.AddMinutes(5);
+            var periodoMinutos = await ObterPeriodoMinutosAsync(ct);
+            proximoCiclo = ultimoCiclo.DtFimProcesso.Value.AddMinutes(periodoMinutos);
         }
 
         var result = new ExecucaoDto(
@@ -168,5 +186,19 @@ public class WorkerController : ControllerBase
         }
 
         await _context.SaveChangesAsync(ct);
+    }
+
+    private async Task<int> ObterPeriodoMinutosAsync(CancellationToken ct)
+    {
+        if (_cachedPeriodoMinutos.HasValue && DateTime.UtcNow < _cacheValidoAte)
+            return _cachedPeriodoMinutos.Value;
+
+        var parametros = await _paramRepository.BuscarParametrosExecucaoAsync(
+            _settings.Value.NomeSistema, COD_HORA_INI, COD_HORA_FIM, COD_PERIODO, ct);
+
+        var periodo = parametros?.PeriodoMinutos ?? PERIODO_DEFAULT_MINUTOS;
+        _cachedPeriodoMinutos = periodo;
+        _cacheValidoAte = DateTime.UtcNow.AddSeconds(CACHE_PERIODO_SEGUNDOS);
+        return periodo;
     }
 }
