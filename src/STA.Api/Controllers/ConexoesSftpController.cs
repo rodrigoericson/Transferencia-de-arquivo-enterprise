@@ -311,7 +311,7 @@ public class ConexoesSftpController : ControllerBase
     private async Task<ActionResult<ApiResponse<T>>> ExecuteSftpAsync<T>(
         int id,
         Func<ISftpClientWrapper, string, ApiResponse<T>> action,
-        string path = "/",
+        string? path = "/",
         CancellationToken ct = default)
     {
         var conexao = await _context.ConexoesSftp.FindAsync([id], ct);
